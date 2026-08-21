@@ -1,0 +1,15 @@
+package {{PACKAGE}}.ui.login
+
+import androidx.compose.runtime.Immutable
+
+@Immutable
+data class LoginUiState(
+    val email: String = "",
+    val password: String = "",
+    val isSubmitting: Boolean = false,
+    val errorMessage: String? = null,
+    val isSignedIn: Boolean = false,
+) {
+    val canSubmit: Boolean
+        get() = email.isNotBlank() && password.isNotBlank() && !isSubmitting
+}

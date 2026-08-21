@@ -1,0 +1,19 @@
+package {{PACKAGE}}.data.local
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface ItemDao {
+
+    @Query("SELECT * FROM items ORDER BY id DESC")
+    fun observeAll(): Flow<List<ItemEntity>>
+
+    @Insert
+    suspend fun insert(item: ItemEntity)
+
+    @Query("DELETE FROM items")
+    suspend fun clear()
+}

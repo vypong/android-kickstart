@@ -1,0 +1,155 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    alias(libs.plugins.android.application)
+{{#unless agpBuiltInKotlin}}
+    alias(libs.plugins.kotlin.android)
+{{/unless}}
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+{{#if ksp}}
+    alias(libs.plugins.ksp)
+{{/if}}
+{{#if hilt}}
+    alias(libs.plugins.hilt)
+{{/if}}
+{{#if room}}
+    alias(libs.plugins.room)
+{{/if}}
+{{#if sqldelight}}
+    alias(libs.plugins.sqldelight)
+{{/if}}
+}
+
+android {
+    namespace = "{{PACKAGE}}"
+    compileSdk = {{COMPILE_SDK}}
+
+    defaultConfig {
+        applicationId = "{{PACKAGE}}"
+        minSdk = {{MIN_SDK}}
+        targetSdk = {{TARGET_SDK}}
+        versionCode = 1
+        versionName = "1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_{{JAVA_VERSION}}
+        targetCompatibility = JavaVersion.VERSION_{{JAVA_VERSION}}
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_{{JAVA_VERSION}})
+    }
+}
+{{#if room}}
+
+room {
+    // Exported schemas belong in version control - they are how Room validates migrations.
+    schemaDirectory("$projectDir/schemas")
+}
+{{/if}}
+{{#if sqldelight}}
+
+sqldelight {
+    databases {
+        create("AppDatabase") {
+            // .sq files live in app/src/main/sqldelight/<this package as folders>/
+            packageName.set("{{PACKAGE}}.data.local")
+        }
+    }
+}
+{{/if}}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+
+    // A BOM sets the version for every Compose artifact, so the bundle carries none.
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.compose)
+{{#if hilt}}
+
+    implementation(libs.bundles.hilt)
+    ksp(libs.hilt.compiler)
+{{/if}}
+{{#if koin}}
+
+    implementation(platform(libs.koin.bom))
+    implementation(libs.bundles.koin)
+{{/if}}
+{{#if room}}
+
+    implementation(libs.bundles.room)
+    ksp(libs.androidx.room.compiler)
+{{/if}}
+{{#if sqldelight}}
+
+    implementation(libs.bundles.sqldelight)
+{{/if}}
+{{#if prefs}}
+
+    implementation(libs.androidx.datastore.preferences)
+{{/if}}
+{{#if coil}}
+
+    implementation(platform(libs.coil.bom))
+    implementation(libs.bundles.coil)
+{{/if}}
+{{#if glide}}
+
+    implementation(libs.bundles.glide)
+{{/if}}
+{{#if retrofit}}
+
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.bundles.retrofit)
+{{/if}}
+{{#if ktor}}
+
+    implementation(platform(libs.ktor.bom))
+    implementation(libs.bundles.ktor)
+{{/if}}
+
+    testImplementation(libs.bundles.unit.test)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.bundles.android.test)
+
+    // Interactive preview and layout inspector, debug builds only.
+    debugImplementation(libs.androidx.ui.tooling)
+}

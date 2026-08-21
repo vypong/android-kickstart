@@ -1,0 +1,70 @@
+package {{PACKAGE}}.ui.home
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import {{PACKAGE}}.domain.repository.AuthRepository
+import {{PACKAGE}}.domain.repository.ItemRepository
+{{#if noDi}}
+import {{PACKAGE}}.di.ServiceLocator
+{{/if}}
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+{{#if hilt}}
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+{{/if}}
+
+/**
+ * Combines the two sources of truth this screen needs. Neither is owned by the ViewModel -
+ * it only shapes them into a single immutable [HomeUiState].
+ */
+{{#if hilt}}
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val itemRepository: ItemRepository,
+) : ViewModel() {
+{{/if}}
+{{#if koin}}
+class HomeViewModel(
+    private val authRepository: AuthRepository,
+    private val itemRepository: ItemRepository,
+) : ViewModel() {
+{{/if}}
+{{#if noDi}}
+class HomeViewModel(
+    private val authRepository: AuthRepository = ServiceLocator.authRepository,
+    private val itemRepository: ItemRepository = ServiceLocator.itemRepository,
+) : ViewModel() {
+{{/if}}
+
+    val uiState: StateFlow<HomeUiState> =
+        combine(authRepository.currentUser, itemRepository.observeItems()) { user, items ->
+            HomeUiState(user = user, items = items, isLoading = false)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+            initialValue = HomeUiState(),
+        )
+
+    fun addItem(label: String) {
+        val trimmed = label.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch { itemRepository.addItem(trimmed) }
+    }
+
+    fun clearItems() {
+        viewModelScope.launch { itemRepository.clearItems() }
+    }
+
+    fun signOut() {
+        viewModelScope.launch { authRepository.signOut() }
+    }
+
+    private companion object {
+        const val STOP_TIMEOUT_MILLIS = 5_000L
+    }
+}

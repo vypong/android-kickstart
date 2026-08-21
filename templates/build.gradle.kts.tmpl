@@ -1,0 +1,20 @@
+// Top-level build file. Plugins are declared here and applied in :app.
+plugins {
+    alias(libs.plugins.android.application) apply false
+{{#unless agpBuiltInKotlin}}
+    alias(libs.plugins.kotlin.android) apply false
+{{/unless}}
+    alias(libs.plugins.kotlin.compose) apply false
+{{#if ksp}}
+    alias(libs.plugins.ksp) apply false
+{{/if}}
+{{#if hilt}}
+    alias(libs.plugins.hilt) apply false
+{{/if}}
+{{#if room}}
+    alias(libs.plugins.room) apply false
+{{/if}}
+{{#if serialization}}
+    alias(libs.plugins.kotlin.serialization) apply false
+{{/if}}
+}

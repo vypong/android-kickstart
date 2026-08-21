@@ -1,0 +1,17 @@
+package {{PACKAGE}}.domain.repository
+
+import {{PACKAGE}}.domain.model.Item
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * The UI layer depends on this interface, never on a concrete implementation, so storage can
+ * be swapped and tests can supply a fake.
+ */
+interface ItemRepository {
+
+    fun observeItems(): Flow<List<Item>>
+
+    suspend fun addItem(label: String)
+
+    suspend fun clearItems()
+}

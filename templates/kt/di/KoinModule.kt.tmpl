@@ -1,0 +1,72 @@
+package {{PACKAGE}}.di
+
+{{#if room}}
+import androidx.room.Room
+import {{PACKAGE}}.data.local.AppDatabase
+import {{PACKAGE}}.data.local.ItemDao
+{{/if}}
+{{#if sqldelight}}
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import {{PACKAGE}}.data.local.AppDatabase
+import {{PACKAGE}}.data.local.ItemQueries
+{{/if}}
+{{#if prefs}}
+import {{PACKAGE}}.data.preferences.SessionDataSource
+{{/if}}
+{{#if network}}
+import {{PACKAGE}}.data.remote.ApiClient
+{{/if}}
+import {{PACKAGE}}.data.repository.DefaultAuthRepository
+import {{PACKAGE}}.data.repository.DefaultItemRepository
+import {{PACKAGE}}.domain.repository.AuthRepository
+import {{PACKAGE}}.domain.repository.ItemRepository
+{{#if sample}}
+import {{PACKAGE}}.ui.AppViewModel
+import {{PACKAGE}}.ui.home.HomeViewModel
+import {{PACKAGE}}.ui.login.LoginViewModel
+{{/if}}
+import org.koin.android.ext.koin.androidContext
+{{#if sample}}
+import org.koin.androidx.viewmodel.dsl.viewModel
+{{/if}}
+import org.koin.dsl.module
+
+val appModule = module {
+{{#if room}}
+    single {
+        Room.databaseBuilder(androidContext(), AppDatabase::class.java, AppDatabase.NAME).build()
+    }
+    single<ItemDao> { get<AppDatabase>().itemDao() }
+    single<ItemRepository> { DefaultItemRepository(get()) }
+{{/if}}
+{{#if sqldelight}}
+    single { AppDatabase(AndroidSqliteDriver(AppDatabase.Schema, androidContext(), "app.db")) }
+    single<ItemQueries> { get<AppDatabase>().itemQueries }
+    single<ItemRepository> { DefaultItemRepository(get()) }
+{{/if}}
+{{#if noStore}}
+    single<ItemRepository> { DefaultItemRepository() }
+{{/if}}
+{{#if prefs}}
+
+    single { SessionDataSource(androidContext()) }
+    single<AuthRepository> { DefaultAuthRepository(get()) }
+{{else}}
+    single<AuthRepository> { DefaultAuthRepository() }
+{{/if}}
+{{#if retrofit}}
+
+    single { ApiClient.exampleApi() }
+{{/if}}
+{{#if ktor}}
+
+    single { ApiClient.httpClient() }
+{{/if}}
+
+{{#if sample}}
+
+    viewModel { AppViewModel(get()) }
+    viewModel { LoginViewModel(get()) }
+    viewModel { HomeViewModel(get(), get()) }
+{{/if}}
+}

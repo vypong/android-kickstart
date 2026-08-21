@@ -1,0 +1,62 @@
+package {{PACKAGE}}.ui.login
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if noDi}}
+import {{PACKAGE}}.di.ServiceLocator
+{{/if}}
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+{{#if hilt}}
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+{{/if}}
+
+{{#if hilt}}
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+) : ViewModel() {
+{{/if}}
+{{#if koin}}
+class LoginViewModel(
+    private val authRepository: AuthRepository,
+) : ViewModel() {
+{{/if}}
+{{#if noDi}}
+class LoginViewModel(
+    private val authRepository: AuthRepository = ServiceLocator.authRepository,
+) : ViewModel() {
+{{/if}}
+
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+
+    fun updateEmail(value: String) {
+        _uiState.update { it.copy(email = value, errorMessage = null) }
+    }
+
+    fun updatePassword(value: String) {
+        _uiState.update { it.copy(password = value, errorMessage = null) }
+    }
+
+    fun signIn() {
+        val state = _uiState.value
+        if (!state.canSubmit) return
+
+        _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+        viewModelScope.launch {
+            authRepository.signIn(state.email, state.password)
+                .onSuccess { _uiState.update { s -> s.copy(isSubmitting = false, isSignedIn = true) } }
+                .onFailure { error ->
+                    _uiState.update { s ->
+                        s.copy(isSubmitting = false, errorMessage = error.message ?: "Sign in failed.")
+                    }
+                }
+        }
+    }
+}

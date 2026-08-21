@@ -1,0 +1,16 @@
+# Build JVM. 2 GB suits a 16 GB machine that also has Android Studio open; raise it if you
+# have headroom, lower it if builds are killed by the OS.
+org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8
+
+# The Kotlin compiler runs in its own daemon, so it needs its own budget - otherwise it
+# inherits a default that can double the build's real memory use.
+kotlin.daemon.jvmargs=-Xmx1536m
+
+org.gradle.parallel=true
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+
+kotlin.code.style=official

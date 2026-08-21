@@ -1,0 +1,79 @@
+package {{PACKAGE}}.ui
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import {{PACKAGE}}.ui.home.HomeScreen
+import {{PACKAGE}}.ui.login.LoginScreen
+import {{PACKAGE}}.ui.navigation.HomeRoute
+import {{PACKAGE}}.ui.navigation.LoginRoute
+{{#if hilt}}
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+{{/if}}
+{{#if koin}}
+import org.koin.androidx.compose.koinViewModel
+{{/if}}
+{{#if noDi}}
+import androidx.lifecycle.viewmodel.compose.viewModel
+{{/if}}
+
+/**
+ * Single navigation host. The start destination is chosen only after the stored session has
+ * been read, which is why the NavHost is not composed while [AppUiState.isLoading] is true.
+ */
+@Composable
+fun AppRoot(
+{{#if hilt}}
+    viewModel: AppViewModel = hiltViewModel(),
+{{/if}}
+{{#if koin}}
+    viewModel: AppViewModel = koinViewModel(),
+{{/if}}
+{{#if noDi}}
+    viewModel: AppViewModel = viewModel(),
+{{/if}}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    if (uiState.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = if (uiState.isSignedIn) HomeRoute else LoginRoute,
+    ) {
+        composable<LoginRoute> {
+            LoginScreen(
+                onSignedIn = {
+                    navController.navigate(HomeRoute) {
+                        // Drop Login from the back stack so Back does not return to it.
+                        popUpTo(LoginRoute) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable<HomeRoute> {
+            HomeScreen(
+                onSignedOut = {
+                    navController.navigate(LoginRoute) {
+                        popUpTo(HomeRoute) { inclusive = true }
+                    }
+                },
+            )
+        }
+    }
+}

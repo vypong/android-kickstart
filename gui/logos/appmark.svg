@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="android-kickstart">
+  <!--
+    Original mark. Robot-shaped so it reads as Android at a glance, but deliberately not
+    Google's Android robot: different proportions, a squared visor instead of round eyes,
+    and a forward chevron in the body for "kickstart". Android green #3DDC84.
+  -->
+  <g fill="none" stroke="#3DDC84" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15.5 8.5 L18.8 13.6"/>
+    <path d="M32.5 8.5 L29.2 13.6"/>
+  </g>
+
+  <!-- head -->
+  <path d="M11 20.5a13 13 0 0 1 26 0z" fill="#3DDC84"/>
+  <rect x="18.4" y="15.4" width="3.1" height="3.1" rx="1" fill="#0B1F14"/>
+  <rect x="26.5" y="15.4" width="3.1" height="3.1" rx="1" fill="#0B1F14"/>
+
+  <!-- body, with a play chevron cut out of it -->
+  <rect x="11" y="23.5" width="26" height="16.5" rx="4.5" fill="#3DDC84"/>
+  <path d="M20.5 28.4 L27.2 31.75 L20.5 35.1 Z" fill="#0B1F14"/>
+</svg>

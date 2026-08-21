@@ -1,0 +1,196 @@
+package {{PACKAGE}}.ui.login
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import {{PACKAGE}}.ui.theme.AppTheme
+{{#if hilt}}
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+{{/if}}
+{{#if koin}}
+import org.koin.androidx.compose.koinViewModel
+{{/if}}
+{{#if noDi}}
+import androidx.lifecycle.viewmodel.compose.viewModel
+{{/if}}
+
+@Composable
+fun LoginScreen(
+    onSignedIn: () -> Unit,
+    modifier: Modifier = Modifier,
+{{#if hilt}}
+    viewModel: LoginViewModel = hiltViewModel(),
+{{/if}}
+{{#if koin}}
+    viewModel: LoginViewModel = koinViewModel(),
+{{/if}}
+{{#if noDi}}
+    viewModel: LoginViewModel = viewModel(),
+{{/if}}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Navigation is a side effect of state changing, not something the ViewModel triggers.
+    LaunchedEffect(uiState.isSignedIn) {
+        if (uiState.isSignedIn) onSignedIn()
+    }
+
+    LoginContent(
+        uiState = uiState,
+        onEmailChange = viewModel::updateEmail,
+        onPasswordChange = viewModel::updatePassword,
+        onSubmit = viewModel::signIn,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun LoginContent(
+    uiState: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(modifier = modifier) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = "{{APP_NAME}}",
+                style = MaterialTheme.typography.headlineMedium,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Sign in to continue",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = uiState.email,
+                onValueChange = onEmailChange,
+                label = { Text("Email") },
+                singleLine = true,
+                enabled = !uiState.isSubmitting,
+                isError = uiState.errorMessage != null,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = uiState.password,
+                onValueChange = onPasswordChange,
+                label = { Text("Password") },
+                singleLine = true,
+                enabled = !uiState.isSubmitting,
+                isError = uiState.errorMessage != null,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            if (uiState.errorMessage != null) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = uiState.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            Button(
+                onClick = onSubmit,
+                enabled = uiState.canSubmit,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (uiState.isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                } else {
+                    Text("Sign in")
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Any email with a password of 6+ characters works — authentication is a stub.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginContentPreview() {
+    AppTheme {
+        LoginContent(
+            uiState = LoginUiState(email = "vee@example.com", password = "secret"),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSubmit = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Error")
+@Composable
+private fun LoginContentErrorPreview() {
+    AppTheme {
+        LoginContent(
+            uiState = LoginUiState(email = "nope", errorMessage = "Enter a valid email address."),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSubmit = {},
+        )
+    }
+}

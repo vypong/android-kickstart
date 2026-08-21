@@ -1,0 +1,66 @@
+{
+  "name": "android-kickstart",
+  "version": "0.1.0",
+  "description": "Scaffold an Android project on the latest stable libraries - resolved live from Maven and proven by a real Gradle build. CLI + local GUI.",
+  "type": "module",
+  "bin": {
+    "android-kickstart": "./bin/kickstart.mjs",
+    "android-kickstart-gui": "./bin/gui.mjs",
+    "android-versions": "./bin/resolve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/resolver.test.mjs test/templates.test.mjs test/gui.test.mjs",
+    "matrix": "node test/matrix.mjs",
+    "matrix:quick": "node test/matrix.mjs --quick",
+    "resolve": "node bin/resolve.mjs --print-toml",
+    "pin": "node bin/resolve.mjs --pin",
+    "new": "node bin/kickstart.mjs",
+    "gui": "node bin/gui.mjs",
+    "logos": "node tools/fetch_logos.mjs",
+    "fonts": "node tools/fetch_fonts.mjs",
+    "api-levels": "node tools/fetch_api_levels.mjs"
+  },
+  "keywords": [
+    "android",
+    "gradle",
+    "scaffold",
+    "generator",
+    "kotlin",
+    "jetpack-compose",
+    "version-catalog",
+    "hilt",
+    "koin",
+    "room",
+    "sqldelight",
+    "cli"
+  ],
+  "author": "Vee Yik Pong",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vypong/android-kickstart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vypong/android-kickstart/issues"
+  },
+  "homepage": "https://github.com/vypong/android-kickstart#readme",
+  "files": [
+    "bin/",
+    "src/",
+    "gui/",
+    "templates/",
+    "tools/",
+    "vendor/",
+    "catalog.json",
+    "compat.json",
+    "libraries.json",
+    "pinned.json",
+    "android-api-levels.json",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md"
+  ]
+}

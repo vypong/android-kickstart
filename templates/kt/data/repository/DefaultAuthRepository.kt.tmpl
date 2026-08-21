@@ -1,0 +1,102 @@
+package {{PACKAGE}}.data.repository
+
+import {{PACKAGE}}.domain.model.User
+import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if prefs}}
+import {{PACKAGE}}.data.preferences.SessionDataSource
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+{{else}}
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+{{/if}}
+import kotlinx.coroutines.delay
+{{#if hilt}}
+import javax.inject.Inject
+import javax.inject.Singleton
+{{/if}}
+
+/**
+ * STUB AUTHENTICATION - replace the body of [signIn] with a real call to your backend,
+ * Firebase Auth, or Credential Manager. Everything else in the app is already correct:
+ * the UI depends on [AuthRepository], so swapping the implementation changes nothing above.
+ */
+{{#if hilt}}
+@Singleton
+{{/if}}
+{{#if prefs}}
+{{#if hilt}}
+class DefaultAuthRepository @Inject constructor(
+    private val sessionDataSource: SessionDataSource,
+) : AuthRepository {
+{{else}}
+class DefaultAuthRepository(
+    private val sessionDataSource: SessionDataSource,
+) : AuthRepository {
+{{/if}}
+
+    // Session lives in DataStore, so a signed-in user stays signed in across restarts.
+    override val currentUser: Flow<User?> = sessionDataSource.user
+
+    override suspend fun signIn(email: String, password: String): Result<User> {
+        val failure = validate(email, password)
+        if (failure != null) return Result.failure(failure)
+
+        delay(NETWORK_DELAY_MILLIS) // stand-in for the real request
+
+        val user = User(id = email.lowercase(), email = email.trim(), displayName = displayNameFrom(email))
+        sessionDataSource.save(user)
+        return Result.success(user)
+    }
+
+    override suspend fun signOut() {
+        sessionDataSource.clear()
+    }
+
+    /** Convenience for callers that need a one-shot read rather than the Flow. */
+    suspend fun currentUserOrNull(): User? = sessionDataSource.user.first()
+{{else}}
+{{#if hilt}}
+class DefaultAuthRepository @Inject constructor() : AuthRepository {
+{{else}}
+class DefaultAuthRepository : AuthRepository {
+{{/if}}
+
+    // No preferences layer was selected, so the session only lives for this process.
+    // Choose DataStore at generation time to keep users signed in across restarts.
+    private val user = MutableStateFlow<User?>(null)
+
+    override val currentUser: Flow<User?> = user.asStateFlow()
+
+    override suspend fun signIn(email: String, password: String): Result<User> {
+        val failure = validate(email, password)
+        if (failure != null) return Result.failure(failure)
+
+        delay(NETWORK_DELAY_MILLIS) // stand-in for the real request
+
+        val signedIn = User(id = email.lowercase(), email = email.trim(), displayName = displayNameFrom(email))
+        user.value = signedIn
+        return Result.success(signedIn)
+    }
+
+    override suspend fun signOut() {
+        user.value = null
+    }
+{{/if}}
+
+    private fun validate(email: String, password: String): Throwable? = when {
+        !email.contains("@") -> IllegalArgumentException("Enter a valid email address.")
+        password.length < MIN_PASSWORD_LENGTH ->
+            IllegalArgumentException("Password must be at least $MIN_PASSWORD_LENGTH characters.")
+        else -> null
+    }
+
+    private fun displayNameFrom(email: String): String =
+        email.substringBefore('@').replaceFirstChar { it.uppercase() }
+
+    companion object {
+        const val MIN_PASSWORD_LENGTH = 6
+        private const val NETWORK_DELAY_MILLIS = 600L
+    }
+}

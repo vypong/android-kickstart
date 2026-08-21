@@ -1,0 +1,50 @@
+{
+  "_comment": "Hand-maintained. There is no machine-readable source for AGP<->Gradle<->Studio floors. Studio->AGP and AGP->Gradle rows come from developer.android.com/build/releases/about-agp. maxCompileSdk is only trustworthy where compileSdkVerified is true (read from that AGP's own release notes); elsewhere it is a best-effort inference and the build is the real check.",
+  "_lastVerified": "2026-08-21",
+  "_sources": [
+    "https://developer.android.com/build/releases/about-agp",
+    "https://developer.android.com/build/releases/agp-9-2-0-release-notes",
+    "https://developer.android.com/build/releases/agp-9-1-0-release-notes",
+    "https://developer.android.com/build/releases/gradle-plugin"
+  ],
+
+  "studio": [
+    { "name": "Quail 3",                  "version": "2026.1.3", "build": "263", "agpMin": "7.1", "agpMax": "9.3" },
+    { "name": "Quail 2",                  "version": "2026.1.2", "build": "262", "agpMin": "7.1", "agpMax": "9.3" },
+    { "name": "Quail",                    "version": "2026.1.1", "build": "261", "agpMin": "7.1", "agpMax": "9.2" },
+    { "name": "Panda 4 Feature Drop",     "version": "2025.3.4", "build": "253", "agpMin": "7.1", "agpMax": "9.2" },
+    { "name": "Panda 3 Feature Drop",     "version": "2025.3.3", "build": "253", "agpMin": "7.0", "agpMax": "9.1" },
+    { "name": "Panda 2 Feature Drop",     "version": "2025.3.2", "build": "253", "agpMin": "7.0", "agpMax": "9.1" },
+    { "name": "Panda",                    "version": "2025.3.1", "build": "253", "agpMin": "7.0", "agpMax": "9.0" },
+    { "name": "Otter 3 Feature Drop",     "version": "2025.2.3", "build": "252", "agpMin": "4.2", "agpMax": "9.0" },
+    { "name": "Otter 2 Feature Drop",     "version": "2025.2.2", "build": "252", "agpMin": "4.1", "agpMax": "8.13" },
+    { "name": "Otter",                    "version": "2025.2.1", "build": "252", "agpMin": "4.0", "agpMax": "8.13" },
+    { "name": "Narwhal 4 Feature Drop",   "version": "2025.1.4", "build": "251", "agpMin": "4.0", "agpMax": "8.13" },
+    { "name": "Narwhal 3 Feature Drop",   "version": "2025.1.3", "build": "251", "agpMin": "4.0", "agpMax": "8.13" },
+    { "name": "Narwhal Feature Drop",     "version": "2025.1.2", "build": "251", "agpMin": "4.0", "agpMax": "8.12" },
+    { "name": "Narwhal",                  "version": "2025.1.1", "build": "251", "agpMin": "3.2", "agpMax": "8.11" },
+    { "name": "Meerkat Feature Drop",     "version": "2024.3.2", "build": "243", "agpMin": "3.2", "agpMax": "8.10" },
+    { "name": "Meerkat",                  "version": "2024.3.1", "build": "243", "agpMin": "3.2", "agpMax": "8.9" }
+  ],
+
+  "agp": [
+    { "agpMajorMinor": "9.3",  "minGradle": "9.5.0",  "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 37, "compileSdkVerified": true },
+    { "agpMajorMinor": "9.2",  "minGradle": "9.4.1",  "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 37, "compileSdkVerified": true },
+    { "agpMajorMinor": "9.1",  "minGradle": "9.3.1",  "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 37, "compileSdkVerified": true },
+    { "agpMajorMinor": "9.0",  "minGradle": "9.1.0",  "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 36, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.13", "minGradle": "8.13",   "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 36, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.12", "minGradle": "8.13",   "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 36, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.11", "minGradle": "8.13",   "minJdk": 17, "buildTools": "36.0.0", "maxCompileSdk": 36, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.10", "minGradle": "8.11.1", "minJdk": 17, "buildTools": "35.0.0", "maxCompileSdk": 35, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.9",  "minGradle": "8.11.1", "minJdk": 17, "buildTools": "35.0.0", "maxCompileSdk": 35, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.8",  "minGradle": "8.10.2", "minJdk": 17, "buildTools": "35.0.0", "maxCompileSdk": 35, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.7",  "minGradle": "8.9",    "minJdk": 17, "buildTools": "35.0.0", "maxCompileSdk": 35, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.6",  "minGradle": "8.7",    "minJdk": 17, "buildTools": "34.0.0", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.5",  "minGradle": "8.7",    "minJdk": 17, "buildTools": "34.0.0", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.4",  "minGradle": "8.6",    "minJdk": 17, "buildTools": "34.0.0", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.3",  "minGradle": "8.4",    "minJdk": 17, "buildTools": "34.0.0", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.2",  "minGradle": "8.2",    "minJdk": 17, "buildTools": "34.0.0", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.1",  "minGradle": "8.0",    "minJdk": 17, "buildTools": "33.0.1", "maxCompileSdk": 34, "compileSdkVerified": false },
+    { "agpMajorMinor": "8.0",  "minGradle": "8.0",    "minJdk": 17, "buildTools": "33.0.1", "maxCompileSdk": 33, "compileSdkVerified": false }
+  ]
+}

@@ -1,0 +1,62 @@
+package {{PACKAGE}}.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import {{PACKAGE}}.ui.navigation.HomeRoute
+import {{PACKAGE}}.ui.theme.AppTheme
+
+/**
+ * Empty starting point - no sample screens were generated.
+ *
+ * The wiring around this is real and ready: repositories are bound in the DI graph, so a
+ * screen can take one as a constructor parameter and start using it immediately. Add
+ * destinations to the NavHost below as you build them.
+ */
+@Composable
+fun AppRoot() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = HomeRoute) {
+        composable<HomeRoute> { HomePlaceholder() }
+    }
+}
+
+@Composable
+private fun HomePlaceholder(modifier: Modifier = Modifier) {
+    Scaffold(modifier = modifier) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(text = "{{APP_NAME}}", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Replace this with your first screen.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomePlaceholderPreview() {
+    AppTheme { HomePlaceholder() }
+}

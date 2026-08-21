@@ -1,0 +1,42 @@
+package {{PACKAGE}}
+
+import android.app.Application
+{{#if koin}}
+import {{PACKAGE}}.di.appModule
+{{/if}}
+{{#if noDi}}
+import {{PACKAGE}}.di.ServiceLocator
+{{/if}}
+{{#if hilt}}
+import dagger.hilt.android.HiltAndroidApp
+{{/if}}
+{{#if koin}}
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+{{/if}}
+
+{{#if hilt}}
+@HiltAndroidApp
+class App : Application()
+{{/if}}
+{{#if koin}}
+class App : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        startKoin {
+            androidContext(this@App)
+            modules(appModule)
+        }
+    }
+}
+{{/if}}
+{{#if noDi}}
+class App : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        ServiceLocator.init(this)
+    }
+}
+{{/if}}

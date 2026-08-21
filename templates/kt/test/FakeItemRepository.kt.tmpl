@@ -1,0 +1,28 @@
+package {{PACKAGE}}.data.repository
+
+import {{PACKAGE}}.domain.model.Item
+import {{PACKAGE}}.domain.repository.ItemRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+
+/**
+ * Test double. Possible only because the ViewModel depends on the [ItemRepository] interface
+ * rather than on a concrete implementation - no mocking framework needed.
+ */
+class FakeItemRepository : ItemRepository {
+
+    private val items = MutableStateFlow<List<Item>>(emptyList())
+    private var nextId = 1L
+
+    override fun observeItems(): Flow<List<Item>> = items.asStateFlow()
+
+    override suspend fun addItem(label: String) {
+        items.update { it + Item(id = nextId++, label = label) }
+    }
+
+    override suspend fun clearItems() {
+        items.value = emptyList()
+    }
+}

@@ -1,0 +1,22 @@
+package {{PACKAGE}}.data.remote
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+{{#if retrofit}}
+import retrofit2.http.GET
+{{/if}}
+
+/** Wire model. Mapped to a domain model before it reaches the UI layer. */
+@Serializable
+data class ItemDto(
+    @SerialName("id") val id: Long,
+    @SerialName("title") val title: String,
+)
+{{#if retrofit}}
+
+interface ExampleApi {
+
+    @GET("items")
+    suspend fun items(): List<ItemDto>
+}
+{{/if}}

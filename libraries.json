@@ -1,0 +1,89 @@
+{
+  "hilt": {
+    "name": "Hilt",
+    "vendor": "Google",
+    "logo": "hilt.svg",
+    "summary": "Compile-time dependency injection for Android, built on Dagger. The graph is generated at build time, so a missing binding is a compile error rather than a crash on launch.",
+    "tradeoff": "Adds KSP annotation processing to the build.",
+    "github": "https://github.com/google/dagger",
+    "docs": "https://developer.android.com/training/dependency-injection/hilt-android"
+  },
+  "koin": {
+    "name": "Koin",
+    "vendor": "Kotzilla",
+    "logo": "koin.png",
+    "summary": "Pragmatic dependency injection written in pure Kotlin. A small DSL resolves dependencies at runtime, with no annotation processing at all.",
+    "tradeoff": "Missing bindings surface at runtime, not compile time.",
+    "github": "https://github.com/InsertKoinIO/koin",
+    "docs": "https://insert-koin.io/"
+  },
+  "retrofit": {
+    "name": "Retrofit",
+    "vendor": "Square",
+    "logo": "square.svg",
+    "summary": "Turns an HTTP API into a Kotlin interface: declare the endpoints, Retrofit writes the calls. Paired here with OkHttp and kotlinx.serialization.",
+    "tradeoff": "Android/JVM only.",
+    "github": "https://github.com/square/retrofit",
+    "docs": "https://square.github.io/retrofit/"
+  },
+  "ktor": {
+    "name": "Ktor Client",
+    "vendor": "JetBrains",
+    "logo": "ktor.svg",
+    "summary": "Kotlin-first HTTP client, coroutines throughout, with swappable engines. The same code runs on Android, JVM, iOS and JS, so it is the natural pick if you may go multiplatform.",
+    "tradeoff": "More manual setup than Retrofit for simple REST calls.",
+    "github": "https://github.com/ktorio/ktor",
+    "docs": "https://ktor.io/docs/client-create-new-application.html"
+  },
+  "room": {
+    "name": "Room",
+    "vendor": "Android Jetpack",
+    "logo": "sqlite.svg",
+    "summary": "Type-safe SQLite for Android. Your SQL is verified at compile time, and queries return Flows that re-emit whenever the underlying rows change.",
+    "tradeoff": "Adds KSP annotation processing and schema files to version control.",
+    "github": "https://github.com/androidx/androidx/tree/androidx-main/room",
+    "docs": "https://developer.android.com/training/data-storage/room"
+  },
+  "datastore": {
+    "name": "Preferences DataStore",
+    "vendor": "Android Jetpack",
+    "logo": "datastore.svg",
+    "summary": "Asynchronous key-value storage and the modern replacement for SharedPreferences. Reads and writes go through coroutines and Flow, so nothing touches disk on the main thread.",
+    "tradeoff": "Key-value only \u2014 for relational data you want Room instead. The two are complementary, not alternatives.",
+    "github": "https://github.com/androidx/androidx/tree/androidx-main/datastore",
+    "docs": "https://developer.android.com/topic/libraries/architecture/datastore"
+  },
+  "none": {
+    "name": "None",
+    "logo": "none.svg",
+    "summary": "Leave this layer out. The generated project still compiles and runs \u2014 a hand-rolled ServiceLocator replaces the DI framework, and an in-memory repository replaces the database.",
+    "tradeoff": "You can add the real thing later without touching the UI layer, because everything depends on repository interfaces."
+  },
+  "sqldelight": {
+    "name": "SQLDelight",
+    "vendor": "Cash App",
+    "logo": "sqldelight.svg",
+    "summary": "Generates typed Kotlin from .sq files, so your SQL is the source of truth rather than annotations on classes. Queries return Flows that re-emit on change.",
+    "tradeoff": "You write real SQL and it is multiplatform-ready, but there is no Room migration tooling to lean on.",
+    "github": "https://github.com/cashapp/sqldelight",
+    "docs": "https://sqldelight.github.io/sqldelight/"
+  },
+  "coil": {
+    "name": "Coil",
+    "vendor": "Coil contributors",
+    "logo": "coil.svg",
+    "summary": "Kotlin-first image loading built on coroutines, with a Compose API (AsyncImage) as a first-class citizen. The de facto choice for Compose projects.",
+    "tradeoff": "Android and Kotlin Multiplatform only.",
+    "github": "https://github.com/coil-kt/coil",
+    "docs": "https://coil-kt.github.io/coil/"
+  },
+  "glide": {
+    "name": "Glide",
+    "vendor": "Bumptech / Google",
+    "logo": "glide.svg",
+    "summary": "The long-standing Android image loader, battle-tested across huge View-based codebases with strong caching and lifecycle handling.",
+    "tradeoff": "Its Compose integration is still beta after several years - Coil is the smoother fit for a Compose-only app.",
+    "github": "https://github.com/bumptech/glide",
+    "docs": "https://bumptech.github.io/glide/"
+  }
+}

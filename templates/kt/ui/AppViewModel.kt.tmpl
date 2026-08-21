@@ -1,0 +1,50 @@
+package {{PACKAGE}}.ui
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if noDi}}
+import {{PACKAGE}}.di.ServiceLocator
+{{/if}}
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+{{#if hilt}}
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+{{/if}}
+
+/**
+ * Decides which screen the app opens on. Kept separate from the feature ViewModels because
+ * it outlives them - it is scoped to the activity, not to a destination.
+ */
+{{#if hilt}}
+@HiltViewModel
+class AppViewModel @Inject constructor(
+    authRepository: AuthRepository,
+) : ViewModel() {
+{{/if}}
+{{#if koin}}
+class AppViewModel(
+    authRepository: AuthRepository,
+) : ViewModel() {
+{{/if}}
+{{#if noDi}}
+class AppViewModel(
+    authRepository: AuthRepository = ServiceLocator.authRepository,
+) : ViewModel() {
+{{/if}}
+
+    val uiState: StateFlow<AppUiState> = authRepository.currentUser
+        .map { user -> AppUiState(isLoading = false, isSignedIn = user != null) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+            initialValue = AppUiState(),
+        )
+
+    private companion object {
+        const val STOP_TIMEOUT_MILLIS = 5_000L
+    }
+}

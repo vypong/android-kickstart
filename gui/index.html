@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>android-kickstart</title>
+<link rel="icon" type="image/svg+xml" href="/logos/appmark.svg">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<style>
+  /* =========================================================================
+     Material Design 3 tokens (m3.material.io), mapped onto Google's own product
+     colours: Google Blue as primary, Android Green as the confirm/success accent,
+     Google Red for errors, and the Google grey ramp for surfaces and text.
+     Committed to the light "white" surface treatment - no dark variant.
+     ========================================================================= */
+  :root {
+    color-scheme: light;
+
+    /* --- primary: Google Blue --- */
+    --md-primary:             #1a73e8;
+    --md-primary-hover:       #1765cc;
+    --md-on-primary:          #ffffff;
+    --md-primary-container:   #e8f0fe;
+    --md-on-primary-container:#174ea6;
+
+    /* --- secondary: Google grey-blue --- */
+    --md-secondary:           #5f6368;
+    --md-secondary-container: #e8f0fe;
+    --md-on-secondary-container:#174ea6;
+
+    /* --- accents --- */
+    --md-success:             #188038;   /* Google Green */
+    --md-android:             #3ddc84;   /* Android Green */
+    --md-error:               #d93025;   /* Google Red */
+    --md-on-error:            #ffffff;
+    --md-error-container:     #fce8e6;
+    --md-on-error-container:  #a50e0e;
+    --md-warn-container:      #fef7e0;   /* Google Yellow tint */
+    --md-on-warn-container:   #8c5900;
+
+    /* --- surfaces: Google grey ramp --- */
+    --md-surface:                  #ffffff;
+    --md-on-surface:               #202124;
+    --md-on-surface-variant:       #5f6368;
+    --md-surface-container-lowest: #ffffff;
+    --md-surface-container-low:    #fafbfc;
+    --md-surface-container:        #f8f9fa;
+    --md-surface-container-high:   #f1f3f4;
+    --md-surface-container-highest:#e8eaed;
+    --md-outline:                  #dadce0;
+    --md-outline-strong:           #bdc1c6;
+    --md-outline-variant:          #e8eaed;
+
+    /* --- M3 shape scale --- */
+    --md-shape-xs: 4px;
+    --md-shape-s:  8px;
+    --md-shape-m:  12px;
+    --md-shape-l:  16px;
+    --md-shape-xl: 28px;
+    --md-shape-full: 999px;
+
+    /* --- M3 elevation, tuned light --- */
+    --md-elev-1: 0 1px 2px rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
+    --md-elev-2: 0 1px 2px rgba(60,64,67,.30), 0 2px 6px 2px rgba(60,64,67,.15);
+    --md-elev-3: 0 4px 8px 3px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.30);
+
+    /* --- M3 state layer opacities --- */
+    --md-state-hover: .08;
+    --md-state-focus: .10;
+    --md-state-press: .10;
+
+    --md-sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --md-mono: 'Roboto Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--md-surface-container);
+    color: var(--md-on-surface);
+    /* M3 body-large */
+    font: 400 16px/24px var(--md-sans);
+    letter-spacing: .5px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- M3 type scale --- */
+  .md-display-small { font: 400 36px/44px var(--md-sans); letter-spacing: 0; }
+  .md-headline-small{ font: 400 24px/32px var(--md-sans); letter-spacing: 0; }
+  .md-title-large   { font: 400 22px/28px var(--md-sans); letter-spacing: 0; }
+  .md-title-medium  { font: 500 16px/24px var(--md-sans); letter-spacing: .15px; }
+  .md-title-small   { font: 500 14px/20px var(--md-sans); letter-spacing: .1px; }
+  .md-body-large    { font: 400 16px/24px var(--md-sans); letter-spacing: .5px; }
+  .md-body-medium   { font: 400 14px/20px var(--md-sans); letter-spacing: .25px; }
+  .md-label-large   { font: 500 14px/20px var(--md-sans); letter-spacing: .1px; }
+  .md-label-medium  { font: 500 12px/16px var(--md-sans); letter-spacing: .5px; }
+
+  ::selection { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+
+  /* =================== top app bar =================== */
+  .appbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--md-surface);
+    border-bottom: 1px solid var(--md-outline);
+    padding: 10px 24px;
+  }
+  .appbar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .mark {
+    width: 40px; height: 40px; border-radius: var(--md-shape-m);
+    display: grid; place-items: center;
+    background: #e6faee;
+  }
+  .brand .mark img { width: 26px; height: 26px; display: block; }
+  .brand-title { font: 400 22px/28px var(--md-sans); }
+
+  .env { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  /* M3 assist chip */
+  .assist-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 32px; padding: 0 12px; border-radius: var(--md-shape-s);
+    border: 1px solid var(--md-outline-variant); background: transparent;
+    color: var(--md-on-surface-variant);
+    font: 500 14px/20px var(--md-sans); letter-spacing: .1px;
+    max-width: 460px;
+  }
+  .assist-chip .path {
+    font-family: var(--md-mono); font-size: 12px; letter-spacing: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .assist-chip svg { width: 18px; height: 18px; flex: none; }
+  .assist-chip.ok { color: var(--md-primary); border-color: color-mix(in srgb, var(--md-primary) 45%, transparent); }
+  .assist-chip.missing { color: var(--md-error); border-color: color-mix(in srgb, var(--md-error) 45%, transparent); }
+
+  /* =================== layout =================== */
+  .shell {
+    display: grid; grid-template-columns: minmax(0,1fr) minmax(0,470px);
+    align-items: start; max-width: 1440px; margin: 0 auto;
+  }
+  .left { padding: 24px 24px 96px; min-width: 0; }
+  .right {
+    position: sticky; top: 61px; height: calc(100vh - 61px);
+    background: var(--md-surface);
+    border-left: 1px solid var(--md-outline);
+    display: flex; flex-direction: column; min-width: 0;
+  }
+  @media (max-width: 1100px) {
+    .shell { grid-template-columns: 1fr; }
+    .right { position: static; height: auto; border-left: none; border-top: 1px solid var(--md-outline-variant); }
+  }
+
+  /* =================== M3 cards =================== */
+  .card {
+    background: var(--md-surface);
+    border: 1px solid var(--md-outline);
+    border-radius: var(--md-shape-l);
+    padding: 20px 24px 24px;
+    margin-bottom: 16px;
+  }
+  .card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .card-num {
+    width: 36px; height: 36px; border-radius: var(--md-shape-full);
+    display: grid; place-items: center; flex: none;
+    background: var(--md-secondary-container); color: var(--md-on-secondary-container);
+    font: 500 14px/20px var(--md-sans);
+  }
+  .card-sub { color: var(--md-on-surface-variant); margin: 0 0 20px 50px; }
+  @media (max-width: 560px) { .card-sub { margin-left: 0; } }
+
+  /* =================== M3 outlined text field =================== */
+  .tf { position: relative; margin-bottom: 20px; }
+  .tf:last-child { margin-bottom: 0; }
+  .tf > label {
+    display: block; margin-bottom: 8px;
+    color: var(--md-on-surface-variant);
+    font: 500 14px/20px var(--md-sans); letter-spacing: .1px;
+  }
+  .tf .hint { color: var(--md-outline); font-weight: 400; }
+  input[type=text], input[type=number], select {
+    width: 100%; height: 56px; padding: 0 16px;
+    font: 400 16px/24px var(--md-sans); letter-spacing: .5px;
+    color: var(--md-on-surface);
+    background: var(--md-surface-container-lowest);
+    border: 1px solid var(--md-outline);
+    border-radius: var(--md-shape-xs);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input.mono { font-family: var(--md-mono); font-size: 14px; letter-spacing: 0; }
+  input:hover, select:hover { border-color: var(--md-on-surface); }
+  input:focus, select:focus, button:focus-visible, a:focus-visible, summary:focus-visible {
+    outline: none;
+    border-color: var(--md-primary);
+    box-shadow: 0 0 0 1px var(--md-primary);
+  }
+  button:focus-visible, a:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-primary) 40%, transparent);
+  }
+
+  /* select: native chevron replaced so it can be inset properly */
+  select {
+    appearance: none; -webkit-appearance: none;
+    padding-right: 52px; cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 22px 22px;
+  }
+  select option { background: var(--md-surface-container); color: var(--md-on-surface); }
+
+  .ref {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    font: 400 13px/18px var(--md-sans); letter-spacing: .25px;
+    color: var(--md-primary); text-decoration: none;
+  }
+  .ref:hover { text-decoration: underline; }
+  .ref svg { width: 14px; height: 14px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+  .withbtn { display: flex; gap: 12px; }
+  .withbtn input { flex: 1; min-width: 0; }
+
+  /* =================== M3 buttons =================== */
+  button {
+    position: relative; overflow: hidden;
+    font: 500 14px/20px var(--md-sans); letter-spacing: .1px;
+    cursor: pointer; height: 48px; padding: 0 24px;
+    border-radius: var(--md-shape-full);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid var(--md-outline); background: transparent; color: var(--md-primary);
+    transition: box-shadow .15s;
+  }
+  button::before {
+    content: ''; position: absolute; inset: 0; background: currentColor;
+    opacity: 0; transition: opacity .15s; pointer-events: none;
+  }
+  button:hover:not(:disabled)::before { opacity: var(--md-state-hover); }
+  button:active:not(:disabled)::before { opacity: var(--md-state-press); }
+  button:disabled { opacity: .38; cursor: not-allowed; }
+  button svg { width: 18px; height: 18px; flex: none; }
+  button.filled {
+    background: var(--md-primary); color: var(--md-on-primary); border-color: transparent;
+  }
+  button.filled:hover:not(:disabled) { box-shadow: var(--md-elev-1); }
+  button.tonal {
+    background: var(--md-secondary-container); color: var(--md-on-secondary-container);
+    border-color: transparent;
+  }
+  button.text-btn { border-color: transparent; height: 40px; padding: 0 12px; }
+
+  /* =================== M3 filter chips =================== */
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .opt { position: relative; }
+  .opt > input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+  .opt > label.chip {
+    position: relative; overflow: hidden;
+    display: inline-flex; align-items: center; gap: 10px;
+    height: 48px; padding: 0 18px; border-radius: var(--md-shape-s);
+    border: 1px solid var(--md-outline); background: transparent;
+    color: var(--md-on-surface-variant);
+    font: 500 15px/20px var(--md-sans); letter-spacing: .1px;
+    cursor: pointer; user-select: none; white-space: nowrap;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .opt > label.chip::before {
+    content: ''; position: absolute; inset: 0; background: currentColor;
+    opacity: 0; transition: opacity .15s; pointer-events: none;
+  }
+  .opt > label.chip:hover::before { opacity: var(--md-state-hover); }
+  .opt > label.chip img { width: 20px; height: 20px; object-fit: contain; flex: none; }
+  .opt > input:checked + label.chip {
+    background: var(--md-secondary-container);
+    color: var(--md-on-secondary-container);
+    border-color: transparent;
+  }
+  .opt > input:focus-visible + label.chip {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-primary) 40%, transparent);
+  }
+  .chip .tick { width: 0; overflow: hidden; transition: width .15s; }
+  .opt > input:checked + label.chip .tick { width: 18px; }
+  .chip .tick svg { width: 18px; height: 18px; display: block; }
+
+  /* =================== popover =================== */
+  .pop {
+    position: absolute; z-index: 60; left: 0; top: calc(100% + 10px); width: 340px;
+    padding: 20px; border-radius: var(--md-shape-m);
+    background: var(--md-surface-container-high); color: var(--md-on-surface);
+    box-shadow: var(--md-elev-3);
+    opacity: 0; visibility: hidden; transform: translateY(-4px);
+    transition: opacity .15s ease, transform .15s ease, visibility .15s;
+    text-align: left; white-space: normal;
+  }
+  .opt:hover .pop, .opt:focus-within .pop { opacity: 1; visibility: visible; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .pop { transition: none; } }
+  .opt:nth-last-child(-n+2) .pop { left: auto; right: 0; }
+  .pop-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .pop-head img { width: 28px; height: 28px; object-fit: contain; flex: none; }
+  .pop-title { font: 500 16px/24px var(--md-sans); letter-spacing: .15px; }
+  .pop-vendor { font: 400 12px/16px var(--md-sans); letter-spacing: .5px; color: var(--md-on-surface-variant); }
+  .pop p { margin: 0 0 10px; font: 400 14px/20px var(--md-sans); letter-spacing: .25px; }
+  .pop p.muted { color: var(--md-on-surface-variant); }
+  .pop .links { display: flex; gap: 8px; margin-top: 14px; }
+  .pop .links a {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 14px; border-radius: var(--md-shape-s);
+    text-decoration: none; color: var(--md-primary);
+    border: 1px solid var(--md-outline-variant);
+    font: 500 14px/20px var(--md-sans); letter-spacing: .1px;
+  }
+  .pop .links a:hover { background: color-mix(in srgb, var(--md-primary) 8%, transparent); }
+  .pop .links svg { width: 18px; height: 18px; }
+
+  /* =================== notices =================== */
+  .notice {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px; border-radius: var(--md-shape-m); margin: 16px 0;
+    background: var(--md-warn-container); color: var(--md-on-warn-container);
+    font: 400 14px/20px var(--md-sans); letter-spacing: .25px;
+  }
+  .notice.info { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+  .notice.error { background: var(--md-error-container); color: var(--md-on-error-container); }
+  .notice svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+  .notice code {
+    font-family: var(--md-mono); font-size: 13px;
+    background: color-mix(in srgb, var(--md-on-surface) 8%, transparent);
+    padding: 1px 6px; border-radius: var(--md-shape-xs);
+  }
+  .notice a { color: inherit; }
+
+  #detectedNote .notice { margin: 0 0 24px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .facts span {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 36px; padding: 0 14px; border-radius: var(--md-shape-s);
+    background: var(--md-surface-container-high); color: var(--md-on-surface-variant);
+    font: 400 14px/20px var(--md-sans); letter-spacing: .25px;
+  }
+  .facts b { color: var(--md-on-surface); font-weight: 500; font-family: var(--md-mono); font-size: 13px; }
+  .facts span.hero { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+  .facts span.hero b { color: inherit; }
+
+  /* =================== right pane =================== */
+  .pane-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid var(--md-outline-variant); flex: none;
+  }
+  .pane-head .t { font: 500 14px/20px var(--md-mono); letter-spacing: 0; color: var(--md-on-surface-variant); }
+  .pane-head .spacer { flex: 1; }
+
+  .toml {
+    flex: 1; overflow: auto; margin: 0; padding: 18px 20px;
+    font: 400 13px/22px var(--md-mono); white-space: pre;
+    color: var(--md-on-surface-variant); min-height: 220px;
+  }
+  .toml .sec { color: var(--md-primary); font-weight: 500; }
+  .toml .key { color: var(--md-on-surface); }
+  .toml .str { color: #1967d2; }
+  .toml .cmt { color: var(--md-outline); }
+
+  .pane-foot { flex: none; border-top: 1px solid var(--md-outline-variant); padding: 18px 20px; }
+  .actions { display: flex; gap: 12px; }
+  .actions button { flex: 1; }
+  .status {
+    font: 400 14px/20px var(--md-sans); letter-spacing: .25px;
+    color: var(--md-on-surface-variant); margin-top: 14px; min-height: 20px;
+  }
+  .status.err { color: var(--md-error); }
+  .status.ok { color: var(--md-primary); }
+
+  .log {
+    margin: 14px 0 0; padding: 14px; border-radius: var(--md-shape-m);
+    background: var(--md-surface-container-lowest);
+    border: 1px solid var(--md-outline-variant);
+    font: 400 13px/20px var(--md-mono); color: var(--md-on-surface-variant);
+    max-height: 260px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .log:empty { display: none; }
+  .log .ok { color: var(--md-primary); }
+  .log .err { color: var(--md-error); }
+
+  details.guide { margin-top: 14px; }
+  details.guide summary {
+    cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 8px;
+    font: 500 14px/20px var(--md-sans); letter-spacing: .1px; color: var(--md-primary);
+    height: 40px; padding: 0 14px; border-radius: var(--md-shape-full);
+    border: 1px solid var(--md-outline-variant);
+  }
+  details.guide summary::-webkit-details-marker { display: none; }
+  details.guide[open] summary { margin-bottom: 12px; }
+  details.guide ol { margin: 0; padding-left: 22px; }
+  details.guide li { margin-bottom: 8px; font: 400 14px/20px var(--md-sans); letter-spacing: .25px; }
+  details.guide code {
+    font-family: var(--md-mono); font-size: 13px;
+    background: var(--md-surface-container-high); padding: 2px 6px; border-radius: var(--md-shape-xs);
+  }
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <div class="appbar-row">
+    <div class="brand">
+      <span class="mark"><img src="/logos/appmark.svg" alt="" width="26" height="26"></span>
+      <span class="brand-title">android-kickstart</span>
+    </div>
+    <div class="env" id="env"></div>
+  </div>
+  <div id="envGuide"></div>
+</header>
+
+<div class="shell">
+  <div class="left">
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-num">1</span>
+        <h2 class="md-title-large" style="margin:0">Project</h2>
+      </div>
+      <p class="card-sub md-body-medium">Name, package, and where it lands on disk.</p>
+      <div class="grid2">
+        <div class="tf">
+          <label for="name">App name</label>
+          <input type="text" id="name" value="MyApp" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="tf">
+          <label for="pkg">Package <span class="hint">applicationId</span></label>
+          <input type="text" id="pkg" class="mono" value="com.example.myapp" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <div class="tf">
+        <label for="dest">Destination folder</label>
+        <div class="withbtn">
+          <input type="text" id="dest" class="mono" placeholder="Choose a folder…" spellcheck="false">
+          <button type="button" class="tonal" id="browse">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            Browse
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-num">2</span>
+        <h2 class="md-title-large" style="margin:0">Dependencies</h2>
+      </div>
+      <p class="card-sub md-body-medium">Hover any option for what it is and what it costs you.</p>
+      <div class="tf">
+        <label>Dependency injection</label>
+        <div class="chips" id="di"></div>
+      </div>
+      <div class="tf">
+        <label>Networking</label>
+        <div class="chips" id="network"></div>
+      </div>
+      <div class="grid2">
+        <div class="tf">
+          <label>Database <span class="hint">relational</span></label>
+          <div class="chips" id="db"></div>
+        </div>
+        <div class="tf">
+          <label>Preferences <span class="hint">key–value</span></label>
+          <div class="chips" id="prefs"></div>
+        </div>
+      </div>
+      <div class="tf">
+        <label>Image loading</label>
+        <div class="chips" id="image"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-num">3</span>
+        <h2 class="md-title-large" style="margin:0">Sample code</h2>
+      </div>
+      <p class="card-sub md-body-medium">A working vertical slice you can run immediately, or an empty shell.</p>
+      <div class="tf">
+        <label>Include the sample screens</label>
+        <div class="chips" id="sample"></div>
+      </div>
+      <div class="notice info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span id="sampleHint"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <span class="card-num">4</span>
+        <h2 class="md-title-large" style="margin:0">Compatibility</h2>
+      </div>
+      <p class="card-sub md-body-medium">Your IDE sets the ceiling. Pick it and the rest follows.</p>
+      <div id="detectedNote"></div>
+      <div class="grid2">
+        <div class="tf">
+          <label for="studio">Android Studio</label>
+          <select id="studio"></select>
+        </div>
+        <div class="tf">
+          <label for="minSdk">minSdk <span class="hint">oldest Android you support</span></label>
+          <select id="minSdk"></select>
+          <a class="ref" id="eolLink" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v7H3V3h7"/></svg>
+            Which Android versions are still supported?
+          </a>
+        </div>
+      </div>
+      <div id="implies"></div>
+    </section>
+
+  </div>
+
+  <aside class="right">
+    <div class="pane-head">
+      <span class="t">gradle/libs.versions.toml</span>
+      <span class="spacer"></span>
+      <button type="button" class="text-btn" id="refresh" title="Re-resolve from Maven">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7M21 3v6h-6"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <pre class="toml" id="toml" aria-live="polite">resolving…</pre>
+
+    <div class="pane-foot">
+      <div class="actions">
+        <button type="button" class="filled" id="create">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Set up project
+        </button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <pre class="log" id="log"></pre>
+    </div>
+  </aside>
+</div>
+
+<script>
+const GROUPS = {
+  di:      [['hilt','Hilt'],['koin','Koin'],['none','None']],
+  network: [['retrofit','Retrofit'],['ktor','Ktor'],['none','None']],
+  db:      [['room','Room'],['sqldelight','SQLDelight'],['none','None']],
+  prefs:   [['datastore','DataStore'],['none','None']],
+  image:   [['coil','Coil'],['glide','Glide'],['none','None']],
+  sample:  [['yes','Include'],['no','Empty shell']],
+};
+const SAMPLE_LOGOS = { yes: 'android.svg', no: 'none.svg' };
+const $ = (id) => document.getElementById(id);
+let LIBS = {}, INIT = null, busy = false, seq = 0;
+
+const IC = {
+  gh: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 00.5 12a11.5 11.5 0 007.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 015.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0023.5 12 11.5 11.5 0 0012 .5z"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5"/></svg>',
+  tick: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>',
+  chk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+  x:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+};
+
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+const SAMPLE_TEXT = {
+  yes: 'Includes a <b>Login screen</b> (validation, loading and error states), a <b>Home screen</b> '
+     + '(greeting, item list, sign out), an <b>AuthRepository</b> with a stub sign-in to replace with '
+     + 'your backend, and <b>5 unit tests</b> using fakes. Everything builds and runs as generated.',
+  no:  'Skips the screens and tests. You still get the <b>Application class</b>, theme, navigation host, '
+     + 'DI graph, repositories and database wiring — just an empty placeholder screen to replace.',
+};
+
+function popover(key) {
+  const lib = LIBS[key];
+  if (!lib) return '';
+  const links = [
+    lib.github ? '<a href="' + lib.github + '" target="_blank" rel="noopener">' + IC.gh + 'GitHub</a>' : '',
+    lib.docs ? '<a href="' + lib.docs + '" target="_blank" rel="noopener">' + IC.doc + 'Docs</a>' : '',
+  ].join('');
+  return '<div class="pop" role="tooltip">'
+    + '<div class="pop-head"><img src="/logos/' + lib.logo + '" alt="">'
+    + '<div><div class="pop-title">' + esc(lib.name) + '</div>'
+    + (lib.vendor ? '<div class="pop-vendor">' + esc(lib.vendor) + '</div>' : '')
+    + '</div></div>'
+    + '<p>' + esc(lib.summary) + '</p>'
+    + (lib.tradeoff ? '<p class="muted">' + esc(lib.tradeoff) + '</p>' : '')
+    + (links ? '<div class="links">' + links + '</div>' : '')
+    + '</div>';
+}
+
+function renderGroups() {
+  for (const [group, opts] of Object.entries(GROUPS)) {
+    $(group).innerHTML = opts.map(([v, label], i) => {
+      const id = group + '-' + v;
+      const logo = group === 'sample' ? SAMPLE_LOGOS[v] : ((LIBS[v] || {}).logo || 'none.svg');
+      return '<div class="opt">'
+        + '<input type="radio" name="' + group + '" id="' + id + '" value="' + v + '"' + (i === 0 ? ' checked' : '') + '>'
+        + '<label class="chip" for="' + id + '"><img src="/logos/' + logo + '" alt="">' + esc(label)
+        + '<span class="tick">' + IC.tick + '</span></label>'
+        // "None" is self-explanatory - no popover for it, nor for the sample toggle.
+        + (group === 'sample' || v === 'none' ? '' : popover(v))
+        + '</div>';
+    }).join('');
+    $(group).addEventListener('change', () => {
+      if (group === 'sample') updateSampleHint();
+      else refresh();
+    });
+  }
+  updateSampleHint();
+}
+
+function updateSampleHint() {
+  $('sampleHint').innerHTML = SAMPLE_TEXT[pick('sample')];
+}
+
+const pick = (g) => document.querySelector('input[name="' + g + '"]:checked').value;
+const choices = () => ({
+  name: $('name').value.trim() || 'MyApp',
+  packageName: $('pkg').value.trim(),
+  out: $('dest').value.trim(),
+  di: pick('di'), network: pick('network'), db: pick('db'), prefs: pick('prefs'),
+  image: pick('image'),
+  sample: pick('sample'),
+  minSdk: Number($('minSdk').value) || 24,
+  studio: $('studio').value,
+});
+
+let pkgTouched = false;
+$('pkg').addEventListener('input', () => { pkgTouched = true; });
+$('name').addEventListener('input', () => {
+  if (pkgTouched) return;
+  const slug = $('name').value.toLowerCase().replace(/[^a-z0-9]/g, '') || 'myapp';
+  $('pkg').value = 'com.example.' + slug;
+});
+
+function setStatus(text, cls) {
+  const el = $('status');
+  el.className = 'status' + (cls ? ' ' + cls : '');
+  el.textContent = text || '';
+}
+function setBusy(on) {
+  busy = on;
+  for (const id of ['create','refresh','browse']) $(id).disabled = on;
+}
+function log(text, cls) {
+  const el = $('log');
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = text;
+  el.appendChild(s);
+  el.scrollTop = el.scrollHeight;
+}
+
+function highlightToml(src) {
+  // Order and escaping both matter. esc() has already turned the TOML's quotes into &quot;,
+  // so the string rule must match THOSE - matching a literal quote would instead hit the ones
+  // inside the class="..." attributes added below and mangle the markup.
+  return esc(src)
+    .replace(/&quot;([^&]*)&quot;/g, '<span class="str">&quot;$1&quot;</span>')
+    .replace(/^(#.*)$/gm, '<span class="cmt">$1</span>')
+    .replace(/^(\[[^\]]+\])$/gm, '<span class="sec">$1</span>')
+    .replace(/^([A-Za-z0-9_.-]+)(\s*=)/gm, '<span class="key">$1</span>$2')
+    .replace(/( #[^\n<]*)$/gm, '<span class="cmt">$1</span>');
+}
+
+function envChip(ok, label, path, title) {
+  return '<span class="assist-chip ' + (ok ? 'ok' : 'missing') + '" title="' + esc(title || path || '') + '">'
+    + (ok ? IC.chk : IC.x)
+    + '<span>' + esc(label) + '</span>'
+    + (path ? '<span class="path">' + esc(path) + '</span>' : '')
+    + '</span>';
+}
+
+function installGuide(missingSdk, missingJdk) {
+  if (!missingSdk && !missingJdk) return '';
+  const steps = [];
+  if (missingSdk) {
+    steps.push('Install <b>Android Studio</b> from <code>developer.android.com/studio</code>. '
+      + 'It bundles the SDK and a working JDK.');
+    steps.push('Open it once and finish the setup wizard — that is what actually downloads the SDK.');
+    steps.push('The SDK lands in <code>%LOCALAPPDATA%\\Android\\Sdk</code> on Windows, '
+      + '<code>~/Library/Android/sdk</code> on macOS, <code>~/Android/Sdk</code> on Linux.');
+    steps.push('Reload this page. If it still is not found, set <code>ANDROID_HOME</code> to that path.');
+  } else if (missingJdk) {
+    steps.push('Install <b>JDK 17 or newer</b> — Temurin from <code>adoptium.net</code> is the easy choice.');
+    steps.push('Set <code>JAVA_HOME</code> to the install directory, then reopen your terminal.');
+    steps.push('Android Studio also ships one at <code>&lt;studio&gt;/jbr</code>, which this tool uses automatically when it is complete.');
+  }
+  return '<details class="guide"><summary>'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>'
+    + 'How to install what is missing</summary><ol>'
+    + steps.map((s) => '<li>' + s + '</li>').join('')
+    + '</ol></details>';
+}
+
+async function init() {
+  LIBS = await (await fetch('/libraries.json')).json();
+  renderGroups();
+  INIT = await (await fetch('/api/init')).json();
+
+  $('dest').value = INIT.defaultOut;
+
+  $('minSdk').innerHTML = INIT.apiLevels.map((l) => {
+    const support = l.eol ? 'no longer supported' : 'still supported';
+    return '<option value="' + l.api + '"' + (l.api === 24 ? ' selected' : '') + '>'
+      + 'API ' + l.api + '  ·  Android ' + l.version + (l.codename ? ' ' + l.codename : '')
+      + '  ·  ' + support + '</option>';
+  }).join('');
+  $('eolLink').href = INIT.apiLevelsLink;
+
+  const env = [];
+  if (INIT.detected) {
+    env.push(envChip(true, INIT.detected.name + ' ' + INIT.detected.version, '',
+      'Android Studio build ' + (INIT.detectedBuild || '')));
+  } else {
+    env.push(envChip(false, 'Android Studio', 'not found'));
+  }
+  env.push(INIT.sdkDir ? envChip(true, 'SDK', INIT.sdkDir) : envChip(false, 'SDK', 'not found'));
+  env.push(INIT.jdk ? envChip(true, 'JDK', INIT.jdk.home, INIT.jdk.source) : envChip(false, 'JDK', 'not found'));
+  $('env').innerHTML = env.join('');
+  $('envGuide').innerHTML = installGuide(!INIT.sdkDir, !INIT.jdk);
+
+  $('studio').innerHTML = '<option value="">Latest available — no cap</option>'
+    + INIT.studios.map((s) =>
+        '<option value="' + s.version + '"'
+        + (INIT.detected && s.version === INIT.detected.version ? ' selected' : '')
+        + '>' + s.label + ' — AGP ≤ ' + s.agpMax + '</option>').join('');
+
+  $('detectedNote').innerHTML = INIT.detected
+    ? '<div class="notice info">' + IC.chk + '<span>Detected on this machine: <b>'
+      + esc(INIT.detected.name) + ' | ' + esc(INIT.detected.version)
+      + '</b> — selected below. It opens AGP up to <b>' + esc(INIT.detected.agpMax) + '</b>.</span></div>'
+    : '<div class="notice">' + IC.warn + '<span>No Android Studio found, so nothing caps the AGP version. '
+      + 'Pick your version below if you know it.</span></div>';
+
+  $('studio').addEventListener('change', () => { updateImplies(); refresh(); });
+  updateImplies();
+  refresh();
+}
+
+function updateImplies() {
+  const s = INIT.studios.find((x) => x.version === $('studio').value);
+  if (!s) { $('implies').innerHTML = ''; return; }
+  const detected = INIT.detected && s.version === INIT.detected.version;
+  let html = '<div class="facts">'
+    + '<span class="' + (detected ? 'hero' : '') + '">' + esc(s.label) + '</span>'
+    + '<span>AGP <b>≤ ' + s.agpMax + '</b></span>'
+    + '<span>Gradle <b>' + s.gradle + '</b></span>'
+    + '<span>JDK <b>' + s.jdk + '</b></span>'
+    + '<span>compileSdk <b>≤ ' + s.maxCompileSdk + '</b></span>'
+    + '</div>';
+  if (!s.compileSdkVerified) {
+    html += '<div class="notice">' + IC.warn
+      + '<span>This AGP’s compileSdk ceiling is inferred, not read from its release notes. '
+      + 'If the build fails asking for a higher compileSdk, this Android Studio is too old for current AndroidX releases.</span></div>';
+  }
+  $('implies').innerHTML = html;
+}
+
+async function refresh() {
+  if (busy) return;
+  const mine = ++seq;
+  $('toml').textContent = 'resolving…';
+  try {
+    const res = await fetch('/api/preview', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(choices()),
+    });
+    const data = await res.json();
+    if (mine !== seq) return;
+    if (data.error) throw new Error(data.error);
+    $('toml').innerHTML = highlightToml(data.toml);
+    setStatus('compileSdk ' + data.compileSdk + ' · Gradle ' + data.gradleVersion + ' · JDK ' + data.javaVersion);
+  } catch (e) {
+    if (mine !== seq) return;
+    $('toml').textContent = 'could not resolve: ' + e.message;
+  }
+}
+$('refresh').addEventListener('click', refresh);
+
+$('browse').addEventListener('click', async () => {
+  setBusy(true); setStatus('waiting for the folder dialog…');
+  try {
+    const data = await (await fetch('/api/pick-folder', { method: 'POST' })).json();
+    if (data.path) { $('dest').value = data.path; setStatus(''); }
+    else setStatus(data.error ? 'folder picker: ' + data.error : 'cancelled');
+  } finally { setBusy(false); }
+});
+
+function create() {
+  const cfg = choices();
+  if (!cfg.out) { $('dest').focus(); setStatus('choose a destination folder first', 'err'); return; }
+  $('log').textContent = '';
+  setBusy(true);
+  setStatus('setting up…');
+
+  const params = new URLSearchParams(Object.assign({}, cfg, { build: '' }));
+  const es = new EventSource('/api/create?' + params.toString());
+  es.addEventListener('out', (e) => log(JSON.parse(e.data)));
+  es.addEventListener('done', (e) => {
+    const d = JSON.parse(e.data);
+    log('\n' + (d.ok ? '✓ ' : '✗ ') + d.message + '\n', d.ok ? 'ok' : 'err');
+    setStatus(d.message, d.ok ? 'ok' : 'err');
+    setBusy(false); es.close();
+  });
+  es.onerror = () => { setStatus('connection lost', 'err'); setBusy(false); es.close(); };
+}
+$('create').addEventListener('click', create);
+
+init();
+</script>
+</body>
+</html>

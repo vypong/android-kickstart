@@ -1,0 +1,126 @@
+{
+  "_source": "https://endoflife.date/api/android.json",
+  "_fetchedAt": "2026-08-21",
+  "_link": "https://endoflife.date/android",
+  "levels": [
+    {
+      "api": 37,
+      "version": "17",
+      "codename": "Cinnamon Bun",
+      "releaseDate": "2026-06-16",
+      "eol": null
+    },
+    {
+      "api": 36,
+      "version": "16",
+      "codename": "Baklava",
+      "releaseDate": "2025-06-10",
+      "eol": null
+    },
+    {
+      "api": 35,
+      "version": "15",
+      "codename": "Vanilla Ice Cream",
+      "releaseDate": "2024-09-03",
+      "eol": null
+    },
+    {
+      "api": 34,
+      "version": "14",
+      "codename": "Upside Down Cake",
+      "releaseDate": "2023-10-04",
+      "eol": null
+    },
+    {
+      "api": 33,
+      "version": "13",
+      "codename": "Tiramisu",
+      "releaseDate": "2022-08-15",
+      "eol": "2026-03-02"
+    },
+    {
+      "api": 32,
+      "version": "12.1",
+      "codename": "Snow Cone v2",
+      "releaseDate": "2022-03-07",
+      "eol": "2025-03-03"
+    },
+    {
+      "api": 31,
+      "version": "12",
+      "codename": "Snow Cone",
+      "releaseDate": "2021-10-04",
+      "eol": "2025-03-03"
+    },
+    {
+      "api": 30,
+      "version": "11",
+      "codename": "Red Velvet Cake",
+      "releaseDate": "2020-09-08",
+      "eol": "2024-02-05"
+    },
+    {
+      "api": 29,
+      "version": "10",
+      "codename": "Queen Cake",
+      "releaseDate": "2019-09-03",
+      "eol": "2023-03-06"
+    },
+    {
+      "api": 28,
+      "version": "9",
+      "codename": "Pie",
+      "releaseDate": "2018-08-06",
+      "eol": "2022-01-01"
+    },
+    {
+      "api": 27,
+      "version": "8.1",
+      "codename": "Oreo",
+      "releaseDate": "2017-12-05",
+      "eol": "2021-01-10"
+    },
+    {
+      "api": 26,
+      "version": "8.0",
+      "codename": "Oreo",
+      "releaseDate": "2017-08-21",
+      "eol": "2021-01-01"
+    },
+    {
+      "api": 25,
+      "version": "7.1",
+      "codename": "Nougat",
+      "releaseDate": "2016-12-01",
+      "eol": "2019-10-01"
+    },
+    {
+      "api": 24,
+      "version": "7.0",
+      "codename": "Nougat",
+      "releaseDate": "2016-08-22",
+      "eol": "2019-10-01"
+    },
+    {
+      "api": 23,
+      "version": "6.0",
+      "codename": "Marshmallow",
+      "releaseDate": "2015-10-05",
+      "eol": "2018-08-01"
+    },
+    {
+      "api": 22,
+      "version": "5.1",
+      "codename": "Lollipop",
+      "releaseDate": "2015-03-01",
+      "eol": "2018-03-01"
+    },
+    {
+      "api": 21,
+      "version": "5.0",
+      "codename": "Lollipop",
+      "releaseDate": "2014-11-12",
+      "eol": "2018-03-01"
+    }
+  ]
+}

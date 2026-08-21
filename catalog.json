@@ -1,0 +1,311 @@
+{
+  "artifacts": {
+    "agp": {
+      "repo": "google",
+      "group": "com.android.tools.build",
+      "artifact": "gradle",
+      "pluginId": "com.android.application",
+      "tag": "core",
+      "note": "Android Gradle Plugin. Drives the Gradle + JDK floor (see compat.json)."
+    },
+    "kotlin": {
+      "repo": "central",
+      "group": "org.jetbrains.kotlin",
+      "artifact": "kotlin-gradle-plugin",
+      "pluginId": "org.jetbrains.kotlin.android",
+      "tag": "core",
+      "note": "<release> in maven-metadata is unreliable here - it often points at an -RC."
+    },
+    "ksp": {
+      "repo": "central",
+      "group": "com.google.devtools.ksp",
+      "artifact": "symbol-processing-api",
+      "pluginId": "com.google.devtools.ksp",
+      "tag": "core",
+      "note": "Historically pinned to a Kotlin build (2.0.21-1.0.28). Verify pairing against resolved kotlin.",
+      "pluginRepos": [
+        "central"
+      ]
+    },
+    "coroutines": {
+      "repo": "central",
+      "group": "org.jetbrains.kotlinx",
+      "artifact": "kotlinx-coroutines-android",
+      "tag": "core"
+    },
+    "coreKtx": {
+      "repo": "google",
+      "group": "androidx.core",
+      "artifact": "core-ktx",
+      "tag": "core"
+    },
+    "composeBom": {
+      "repo": "google",
+      "group": "androidx.compose",
+      "artifact": "compose-bom",
+      "versionStyle": "calver",
+      "tag": "ui",
+      "note": "CalVer (2026.08.00). Never sort as SemVer."
+    },
+    "composeCompiler": {
+      "derivedFrom": "kotlin",
+      "tag": "ui",
+      "pluginId": "org.jetbrains.kotlin.plugin.compose",
+      "note": "Since Kotlin 2.0 the Compose compiler ships with Kotlin. Derived, never fetched."
+    },
+    "activityCompose": {
+      "repo": "google",
+      "group": "androidx.activity",
+      "artifact": "activity-compose",
+      "tag": "ui"
+    },
+    "lifecycleViewmodelCompose": {
+      "repo": "google",
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-viewmodel-compose",
+      "tag": "ui"
+    },
+    "navigationCompose": {
+      "repo": "google",
+      "group": "androidx.navigation",
+      "artifact": "navigation-compose",
+      "tag": "ui"
+    },
+    "hilt": {
+      "repo": "central",
+      "group": "com.google.dagger",
+      "artifact": "hilt-android",
+      "pluginId": "com.google.dagger.hilt.android",
+      "tag": "di",
+      "note": "Maven Central, NOT Google Maven - dl.google.com 404s for com.google.dagger."
+    },
+    "hiltNavigationCompose": {
+      "repo": "google",
+      "group": "androidx.hilt",
+      "artifact": "hilt-navigation-compose",
+      "tag": "di"
+    },
+    "koin": {
+      "repo": "central",
+      "group": "io.insert-koin",
+      "artifact": "koin-android",
+      "tag": "di"
+    },
+    "koinCompose": {
+      "repo": "central",
+      "group": "io.insert-koin",
+      "artifact": "koin-androidx-compose",
+      "tag": "di"
+    },
+    "retrofit": {
+      "repo": "central",
+      "group": "com.squareup.retrofit2",
+      "artifact": "retrofit",
+      "tag": "network"
+    },
+    "okhttp": {
+      "repo": "central",
+      "group": "com.squareup.okhttp3",
+      "artifact": "okhttp",
+      "tag": "network"
+    },
+    "ktor": {
+      "repo": "central",
+      "group": "io.ktor",
+      "artifact": "ktor-client-core",
+      "tag": "network"
+    },
+    "kotlinxSerialization": {
+      "repo": "central",
+      "group": "org.jetbrains.kotlinx",
+      "artifact": "kotlinx-serialization-json",
+      "pluginId": "org.jetbrains.kotlin.plugin.serialization",
+      "tag": "core",
+      "note": "Library version differs from the PLUGIN version, which tracks Kotlin. Always required: type-safe Navigation Compose routes are @Serializable.",
+      "pluginVersionRef": "kotlin"
+    },
+    "room": {
+      "repo": "google",
+      "group": "androidx.room",
+      "artifact": "room-runtime",
+      "pluginId": "androidx.room",
+      "tag": "db"
+    },
+    "datastore": {
+      "repo": "google",
+      "group": "androidx.datastore",
+      "artifact": "datastore-preferences",
+      "tag": "prefs",
+      "note": "Preferences DataStore. Key-value settings; NOT a Room alternative - a project can use both."
+    },
+    "junit": {
+      "repo": "central",
+      "group": "junit",
+      "artifact": "junit",
+      "tag": "test"
+    },
+    "androidxTestJunit": {
+      "repo": "google",
+      "group": "androidx.test.ext",
+      "artifact": "junit",
+      "tag": "test"
+    },
+    "espresso": {
+      "repo": "google",
+      "group": "androidx.test.espresso",
+      "artifact": "espresso-core",
+      "tag": "test"
+    },
+    "lifecycleRuntimeCompose": {
+      "repo": "google",
+      "group": "androidx.lifecycle",
+      "artifact": "lifecycle-runtime-compose",
+      "tag": "ui",
+      "note": "collectAsStateWithLifecycle lives here, NOT in lifecycle-viewmodel-compose."
+    },
+    "coroutinesTest": {
+      "repo": "central",
+      "group": "org.jetbrains.kotlinx",
+      "artifact": "kotlinx-coroutines-test",
+      "tag": "test",
+      "note": "runTest + UnconfinedTestDispatcher for ViewModel tests."
+    },
+    "turbine": {
+      "repo": "central",
+      "group": "app.cash.turbine",
+      "artifact": "turbine",
+      "tag": "test",
+      "note": "Flow testing. Makes StateFlow assertions readable."
+    },
+    "hiltLifecycleViewmodelCompose": {
+      "repo": "google",
+      "group": "androidx.hilt",
+      "artifact": "hilt-lifecycle-viewmodel-compose",
+      "tag": "di",
+      "note": "hiltViewModel() lives here now; the hilt-navigation-compose copy is deprecated."
+    },
+    "koinBom": {
+      "repo": "central",
+      "group": "io.insert-koin",
+      "artifact": "koin-bom",
+      "tag": "di",
+      "note": "BOM: pins every koin-* artifact to one consistent version."
+    },
+    "ktorBom": {
+      "repo": "central",
+      "group": "io.ktor",
+      "artifact": "ktor-bom",
+      "tag": "network",
+      "note": "BOM: pins every ktor-* artifact, client and serialization together."
+    },
+    "okhttpBom": {
+      "repo": "central",
+      "group": "com.squareup.okhttp3",
+      "artifact": "okhttp-bom",
+      "tag": "network",
+      "note": "BOM: keeps okhttp and logging-interceptor in lockstep."
+    },
+    "coilBom": {
+      "repo": "central",
+      "group": "io.coil-kt.coil3",
+      "artifact": "coil-bom",
+      "tag": "image",
+      "note": "BOM: keeps coil-compose and its network engine in lockstep."
+    },
+    "glide": {
+      "repo": "central",
+      "group": "com.github.bumptech.glide",
+      "artifact": "glide",
+      "tag": "image",
+      "note": "Glide core. The Compose integration is versioned separately and still in beta."
+    },
+    "glideCompose": {
+      "repo": "central",
+      "group": "com.github.bumptech.glide",
+      "artifact": "compose",
+      "tag": "image",
+      "stablePattern": "^[0-9]+(\\.[0-9]+)*(-beta[0-9]+)?$",
+      "note": "Glide's Compose integration has never left beta - hence the relaxed stable rule."
+    },
+    "sqldelight": {
+      "repo": "central",
+      "group": "app.cash.sqldelight",
+      "artifact": "android-driver",
+      "tag": "db",
+      "pluginId": "app.cash.sqldelight",
+      "note": "SQLDelight generates Kotlin from .sq files - SQL is the source of truth, not annotations."
+    }
+  },
+  "profiles": {
+    "base": [
+      "agp",
+      "kotlin",
+      "coroutines",
+      "coreKtx",
+      "kotlinxSerialization",
+      "junit",
+      "coroutinesTest",
+      "turbine",
+      "androidxTestJunit",
+      "espresso"
+    ],
+    "ui": {
+      "compose": [
+        "composeBom",
+        "composeCompiler",
+        "activityCompose",
+        "lifecycleViewmodelCompose",
+        "navigationCompose",
+        "lifecycleRuntimeCompose"
+      ]
+    },
+    "di": {
+      "hilt": [
+        "hilt",
+        "hiltNavigationCompose",
+        "ksp",
+        "hiltLifecycleViewmodelCompose"
+      ],
+      "koin": [
+        "koinBom"
+      ],
+      "none": []
+    },
+    "network": {
+      "retrofit": [
+        "retrofit",
+        "okhttpBom"
+      ],
+      "ktor": [
+        "ktorBom"
+      ],
+      "none": []
+    },
+    "db": {
+      "room": [
+        "room",
+        "ksp"
+      ],
+      "sqldelight": [
+        "sqldelight"
+      ],
+      "none": []
+    },
+    "prefs": {
+      "datastore": [
+        "datastore"
+      ],
+      "none": []
+    },
+    "image": {
+      "coil": [
+        "coilBom"
+      ],
+      "glide": [
+        "glide",
+        "glideCompose"
+      ],
+      "none": []
+    }
+  }
+}

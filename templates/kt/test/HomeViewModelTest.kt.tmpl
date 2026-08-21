@@ -1,0 +1,67 @@
+package {{PACKAGE}}.ui.home
+
+import app.cash.turbine.test
+import {{PACKAGE}}.MainDispatcherRule
+import {{PACKAGE}}.data.repository.FakeAuthRepository
+import {{PACKAGE}}.data.repository.FakeItemRepository
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class HomeViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val authRepository = FakeAuthRepository()
+    private val itemRepository = FakeItemRepository()
+    private val viewModel = HomeViewModel(authRepository, itemRepository)
+
+    @Test
+    fun `shows the signed-in user and an empty list`() = runTest {
+        authRepository.signIn("vee@example.com", "secret1")
+
+        viewModel.uiState.test {
+            skipItems(1) // initial placeholder
+            val state = awaitItem()
+            assertFalse(state.isLoading)
+            assertEquals("vee", state.user?.displayName)
+            assertTrue(state.isEmpty)
+        }
+    }
+
+    @Test
+    fun `adding an item surfaces it in state`() = runTest {
+        viewModel.uiState.test {
+            skipItems(2)
+            viewModel.addItem("Ship it")
+            assertEquals("Ship it", awaitItem().items.first().label)
+        }
+    }
+
+    @Test
+    fun `blank labels are ignored`() = runTest {
+        viewModel.addItem("   ")
+        viewModel.uiState.test {
+            skipItems(1)
+            assertTrue(awaitItem().items.isEmpty())
+        }
+    }
+
+    @Test
+    fun `signing out clears the user`() = runTest {
+        authRepository.signIn("vee@example.com", "secret1")
+
+        viewModel.uiState.test {
+            skipItems(1)
+            assertEquals("vee", awaitItem().user?.displayName)
+
+            viewModel.signOut()
+            assertNull(awaitItem().user)
+        }
+    }
+}

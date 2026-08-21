@@ -1,0 +1,80 @@
+package {{PACKAGE}}.di
+
+import android.content.Context
+{{#if room}}
+import androidx.room.Room
+import {{PACKAGE}}.data.local.AppDatabase
+import {{PACKAGE}}.data.local.ItemDao
+{{/if}}
+{{#if sqldelight}}
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import {{PACKAGE}}.data.local.AppDatabase
+import {{PACKAGE}}.data.local.ItemQueries
+{{/if}}
+{{#if prefs}}
+import {{PACKAGE}}.data.preferences.SessionDataSource
+{{/if}}
+{{#if retrofit}}
+import {{PACKAGE}}.data.remote.ApiClient
+import {{PACKAGE}}.data.remote.ExampleApi
+{{/if}}
+{{#if ktor}}
+import {{PACKAGE}}.data.remote.ApiClient
+{{/if}}
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+{{#if ktor}}
+import io.ktor.client.HttpClient
+{{/if}}
+import javax.inject.Singleton
+
+/**
+ * Provides framework types the app does not own and therefore cannot annotate with @Inject.
+ * Types we do own are bound in [RepositoryModule] with @Binds instead.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+object AppModule {
+{{#if room}}
+
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, AppDatabase.NAME).build()
+
+    @Provides
+    fun provideItemDao(database: AppDatabase): ItemDao = database.itemDao()
+{{/if}}
+{{#if sqldelight}}
+
+    @Provides
+    @Singleton
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
+        AppDatabase(AndroidSqliteDriver(AppDatabase.Schema, context, "app.db"))
+
+    @Provides
+    fun provideItemQueries(database: AppDatabase): ItemQueries = database.itemQueries
+{{/if}}
+{{#if prefs}}
+
+    @Provides
+    @Singleton
+    fun provideSessionDataSource(@ApplicationContext context: Context): SessionDataSource =
+        SessionDataSource(context)
+{{/if}}
+{{#if retrofit}}
+
+    @Provides
+    @Singleton
+    fun provideExampleApi(): ExampleApi = ApiClient.exampleApi()
+{{/if}}
+{{#if ktor}}
+
+    @Provides
+    @Singleton
+    fun provideHttpClient(): HttpClient = ApiClient.httpClient()
+{{/if}}
+}

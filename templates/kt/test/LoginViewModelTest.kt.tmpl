@@ -1,0 +1,75 @@
+package {{PACKAGE}}.ui.login
+
+import app.cash.turbine.test
+import {{PACKAGE}}.MainDispatcherRule
+import {{PACKAGE}}.data.repository.FakeAuthRepository
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class LoginViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val authRepository = FakeAuthRepository()
+    private val viewModel = LoginViewModel(authRepository)
+
+    @Test
+    fun `submit is blocked until both fields are filled`() {
+        assertFalse(viewModel.uiState.value.canSubmit)
+
+        viewModel.updateEmail("vee@example.com")
+        assertFalse(viewModel.uiState.value.canSubmit)
+
+        viewModel.updatePassword("secret1")
+        assertTrue(viewModel.uiState.value.canSubmit)
+    }
+
+    @Test
+    fun `successful sign in flips isSignedIn`() = runTest {
+        viewModel.updateEmail("vee@example.com")
+        viewModel.updatePassword("secret1")
+
+        viewModel.uiState.test {
+            assertFalse(awaitItem().isSignedIn)
+            viewModel.signIn()
+            skipItems(1) // isSubmitting = true
+            val done = awaitItem()
+            assertTrue(done.isSignedIn)
+            assertFalse(done.isSubmitting)
+        }
+    }
+
+    @Test
+    fun `failed sign in surfaces the message and stays signed out`() = runTest {
+        authRepository.nextFailure = IllegalArgumentException("Enter a valid email address.")
+        viewModel.updateEmail("nope")
+        viewModel.updatePassword("secret1")
+
+        viewModel.uiState.test {
+            skipItems(1)
+            viewModel.signIn()
+            skipItems(1) // isSubmitting = true
+            val failed = awaitItem()
+            assertEquals("Enter a valid email address.", failed.errorMessage)
+            assertFalse(failed.isSignedIn)
+            assertFalse(failed.isSubmitting)
+        }
+    }
+
+    @Test
+    fun `editing a field clears the previous error`() = runTest {
+        authRepository.nextFailure = IllegalArgumentException("boom")
+        viewModel.updateEmail("nope")
+        viewModel.updatePassword("secret1")
+        viewModel.signIn()
+
+        viewModel.updateEmail("vee@example.com")
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
+}

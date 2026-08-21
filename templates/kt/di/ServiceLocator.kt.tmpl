@@ -1,0 +1,56 @@
+package {{PACKAGE}}.di
+
+import android.content.Context
+{{#if room}}
+import androidx.room.Room
+import {{PACKAGE}}.data.local.AppDatabase
+{{/if}}
+{{#if sqldelight}}
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import {{PACKAGE}}.data.local.AppDatabase
+{{/if}}
+{{#if prefs}}
+import {{PACKAGE}}.data.preferences.SessionDataSource
+{{/if}}
+import {{PACKAGE}}.data.repository.DefaultAuthRepository
+import {{PACKAGE}}.data.repository.DefaultItemRepository
+import {{PACKAGE}}.domain.repository.AuthRepository
+import {{PACKAGE}}.domain.repository.ItemRepository
+
+/**
+ * Hand-rolled dependency graph - no DI framework was selected. Initialised once from
+ * App.onCreate. Swapping in Hilt or Koin later touches nothing in the UI layer, because every
+ * consumer depends on the repository interfaces rather than on this object.
+ */
+object ServiceLocator {
+
+    lateinit var itemRepository: ItemRepository
+        private set
+
+    lateinit var authRepository: AuthRepository
+        private set
+
+    fun init(context: Context) {
+        val appContext = context.applicationContext
+{{#if room}}
+        val database = Room.databaseBuilder(
+            appContext,
+            AppDatabase::class.java,
+            AppDatabase.NAME,
+        ).build()
+        itemRepository = DefaultItemRepository(database.itemDao())
+{{/if}}
+{{#if sqldelight}}
+        val database = AppDatabase(AndroidSqliteDriver(AppDatabase.Schema, appContext, "app.db"))
+        itemRepository = DefaultItemRepository(database.itemQueries)
+{{/if}}
+{{#if noStore}}
+        itemRepository = DefaultItemRepository()
+{{/if}}
+{{#if prefs}}
+        authRepository = DefaultAuthRepository(SessionDataSource(appContext))
+{{else}}
+        authRepository = DefaultAuthRepository()
+{{/if}}
+    }
+}

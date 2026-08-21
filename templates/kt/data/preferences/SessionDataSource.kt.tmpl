@@ -1,0 +1,60 @@
+package {{PACKAGE}}.data.preferences
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import {{PACKAGE}}.domain.model.User
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+
+// One DataStore per file name per process - a Context extension property is the documented
+// way to guarantee that.
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "session")
+
+/**
+ * Persists the signed-in user. This is what makes the app open straight to Home after a
+ * restart instead of asking for credentials again.
+ *
+ * Note: DataStore is not encrypted. Store a session identifier here, never a password.
+ */
+class SessionDataSource(private val context: Context) {
+
+    private object Keys {
+        val USER_ID = stringPreferencesKey("user_id")
+        val EMAIL = stringPreferencesKey("email")
+        val DISPLAY_NAME = stringPreferencesKey("display_name")
+    }
+
+    val user: Flow<User?> = context.dataStore.data
+        // A corrupt or unreadable file surfaces as IOException; treat it as "signed out"
+        // rather than crashing on launch.
+        .catch { throwable ->
+            if (throwable is IOException) emit(emptyPreferences()) else throw throwable
+        }
+        .map { prefs ->
+            val id = prefs[Keys.USER_ID] ?: return@map null
+            User(
+                id = id,
+                email = prefs[Keys.EMAIL].orEmpty(),
+                displayName = prefs[Keys.DISPLAY_NAME].orEmpty(),
+            )
+        }
+
+    suspend fun save(user: User) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.USER_ID] = user.id
+            prefs[Keys.EMAIL] = user.email
+            prefs[Keys.DISPLAY_NAME] = user.displayName
+        }
+    }
+
+    suspend fun clear() {
+        context.dataStore.edit { it.clear() }
+    }
+}

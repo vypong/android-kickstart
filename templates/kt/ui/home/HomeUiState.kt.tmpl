@@ -1,0 +1,14 @@
+package {{PACKAGE}}.ui.home
+
+import androidx.compose.runtime.Immutable
+import {{PACKAGE}}.domain.model.Item
+import {{PACKAGE}}.domain.model.User
+
+@Immutable
+data class HomeUiState(
+    val user: User? = null,
+    val items: List<Item> = emptyList(),
+    val isLoading: Boolean = true,
+) {
+    val isEmpty: Boolean get() = !isLoading && items.isEmpty()
+}

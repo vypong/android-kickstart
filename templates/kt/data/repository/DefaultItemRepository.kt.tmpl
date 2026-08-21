@@ -1,0 +1,70 @@
+package {{PACKAGE}}.data.repository
+
+import {{PACKAGE}}.domain.model.Item
+import {{PACKAGE}}.domain.repository.ItemRepository
+{{#if room}}
+import {{PACKAGE}}.data.local.ItemDao
+import {{PACKAGE}}.data.local.ItemEntity
+import {{PACKAGE}}.data.local.toDomain
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+{{else}}
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+{{/if}}
+{{#if hilt}}
+import javax.inject.Inject
+import javax.inject.Singleton
+{{/if}}
+
+{{#if room}}
+{{#if hilt}}
+@Singleton
+class DefaultItemRepository @Inject constructor(
+    private val itemDao: ItemDao,
+) : ItemRepository {
+{{else}}
+class DefaultItemRepository(
+    private val itemDao: ItemDao,
+) : ItemRepository {
+{{/if}}
+
+    override fun observeItems(): Flow<List<Item>> =
+        itemDao.observeAll().map { entities -> entities.map(ItemEntity::toDomain) }
+
+    override suspend fun addItem(label: String) {
+        itemDao.insert(ItemEntity(label = label))
+    }
+
+    override suspend fun clearItems() {
+        itemDao.clear()
+    }
+}
+{{else}}
+/**
+ * In-memory implementation. No persistence layer was selected, so state lives for the process
+ * lifetime only - swap this for a Room-backed implementation without touching the UI.
+ */
+{{#if hilt}}
+@Singleton
+class DefaultItemRepository @Inject constructor() : ItemRepository {
+{{else}}
+class DefaultItemRepository : ItemRepository {
+{{/if}}
+
+    private val items = MutableStateFlow<List<Item>>(emptyList())
+    private var nextId = 1L
+
+    override fun observeItems(): Flow<List<Item>> = items.asStateFlow()
+
+    override suspend fun addItem(label: String) {
+        items.update { current -> current + Item(id = nextId++, label = label) }
+    }
+
+    override suspend fun clearItems() {
+        items.value = emptyList()
+    }
+}
+{{/if}}

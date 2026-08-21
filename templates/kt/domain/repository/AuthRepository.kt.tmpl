@@ -1,0 +1,14 @@
+package {{PACKAGE}}.domain.repository
+
+import {{PACKAGE}}.domain.model.User
+import kotlinx.coroutines.flow.Flow
+
+interface AuthRepository {
+
+    /** Emits the signed-in user, or null when signed out. The app's source of truth for auth. */
+    val currentUser: Flow<User?>
+
+    suspend fun signIn(email: String, password: String): Result<User>
+
+    suspend fun signOut()
+}

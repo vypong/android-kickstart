@@ -1,0 +1,27 @@
+package {{PACKAGE}}
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import {{PACKAGE}}.ui.AppRoot
+import {{PACKAGE}}.ui.theme.AppTheme
+{{#if hilt}}
+import dagger.hilt.android.AndroidEntryPoint
+{{/if}}
+
+{{#if hilt}}
+@AndroidEntryPoint
+{{/if}}
+class MainActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        setContent {
+            AppTheme {
+                AppRoot()
+            }
+        }
+    }
+}

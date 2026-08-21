@@ -1,0 +1,10 @@
+package {{PACKAGE}}.domain.model
+
+/**
+ * Domain model. Deliberately independent of Room entities and network DTOs so the UI and
+ * business rules never depend on a storage or wire format.
+ */
+data class Item(
+    val id: Long,
+    val label: String,
+)

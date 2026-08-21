@@ -1,0 +1,47 @@
+package {{PACKAGE}}.data.repository
+
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import {{PACKAGE}}.data.local.ItemQueries
+import {{PACKAGE}}.domain.model.Item
+import {{PACKAGE}}.domain.repository.ItemRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+{{#if hilt}}
+import javax.inject.Inject
+import javax.inject.Singleton
+{{/if}}
+
+/**
+ * [ItemQueries] is generated from Item.sq - there is no DAO interface to write.
+ * Reads come back as a Flow that re-emits whenever the table changes.
+ */
+{{#if hilt}}
+@Singleton
+class DefaultItemRepository @Inject constructor(
+    private val itemQueries: ItemQueries,
+) : ItemRepository {
+{{else}}
+class DefaultItemRepository(
+    private val itemQueries: ItemQueries,
+) : ItemRepository {
+{{/if}}
+
+    override fun observeItems(): Flow<List<Item>> =
+        itemQueries.selectAll()
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { rows -> rows.map { Item(id = it.id, label = it.label) } }
+
+    // Block bodies, not expression bodies: SQLDelight's mutators return QueryResult<Long>,
+    // which would leak into the interface's Unit return type.
+    override suspend fun addItem(label: String) {
+        withContext(Dispatchers.IO) { itemQueries.insert(label) }
+    }
+
+    override suspend fun clearItems() {
+        withContext(Dispatchers.IO) { itemQueries.deleteAll() }
+    }
+}

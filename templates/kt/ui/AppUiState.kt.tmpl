@@ -1,0 +1,10 @@
+package {{PACKAGE}}.ui
+
+import androidx.compose.runtime.Immutable
+
+@Immutable
+data class AppUiState(
+    /** True until the stored session has been read, so we never flash the wrong screen. */
+    val isLoading: Boolean = true,
+    val isSignedIn: Boolean = false,
+)

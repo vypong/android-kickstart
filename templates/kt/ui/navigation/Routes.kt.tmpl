@@ -1,0 +1,13 @@
+package {{PACKAGE}}.ui.navigation
+
+import kotlinx.serialization.Serializable
+
+/**
+ * Type-safe Navigation Compose routes. Destinations are @Serializable objects rather than
+ * strings, so a typo is a compile error and arguments keep their types.
+ */
+@Serializable
+data object LoginRoute
+
+@Serializable
+data object HomeRoute

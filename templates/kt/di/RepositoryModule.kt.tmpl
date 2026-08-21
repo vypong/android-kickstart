@@ -1,0 +1,28 @@
+package {{PACKAGE}}.di
+
+import {{PACKAGE}}.data.repository.DefaultAuthRepository
+import {{PACKAGE}}.data.repository.DefaultItemRepository
+import {{PACKAGE}}.domain.repository.AuthRepository
+import {{PACKAGE}}.domain.repository.ItemRepository
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+/**
+ * @Binds rather than @Provides: Dagger wires the implementation directly to the interface with
+ * no factory method generated at all, which is both faster and less code.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindItemRepository(impl: DefaultItemRepository): ItemRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(impl: DefaultAuthRepository): AuthRepository
+}
