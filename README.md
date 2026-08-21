@@ -79,8 +79,12 @@ Material Web Components so the page stays one offline file. Roboto and Roboto Mo
 vendored alongside the logos, so nothing is fetched at runtime.
 
 Same options as the CLI, plus a live `libs.versions.toml` preview that re-resolves as you
-change choices, a native folder picker, a streaming build log, and detected SDK/JDK/Studio
-paths in the top bar with an install guide when something is missing.
+change choices, a native folder picker, and detected SDK/JDK/Studio paths in the top bar with
+an install guide when something is missing.
+
+The GUI generates and opens the project in Android Studio — it does not run Gradle, because
+Studio syncs the project itself the moment it opens. Use the CLI's `--build` when you want
+the version set verified before you open anything.
 
 The CLI mirrors every GUI affordance: `--list-studios`, `--list-libs`, `--info=koin`,
 `--dry-run`. Both read the same `libraries.json` and `compat.json`, so they cannot drift.

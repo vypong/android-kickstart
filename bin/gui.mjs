@@ -288,9 +288,18 @@ const server = createServer(async (req, res) => {
       });
       child.stdout.on('data', (d) => stream.out(String(d)));
       child.stderr.on('data', (d) => stream.out(String(d)));
-      child.on('close', (code) => stream.done(code === 0,
-        code === 0 ? 'Build and unit tests passed. The version set composes.'
-                   : `Gradle exited ${code} — see the log above.`));
+      child.on('close', (code) => {
+        if (code !== 0) return stream.done(false, `Gradle exited ${code} — see the log above.`);
+        if (!q.open) return stream.done(true, 'Build and unit tests passed.');
+
+        const opened = openInStudio(outDir, spawn);
+        stream.out(opened.opened
+          ? '\nopening in Android Studio…\n'
+          : `\ncould not open the IDE: ${opened.reason}\n`);
+        return stream.done(true, opened.opened
+          ? 'Build and tests passed. Opening in Android Studio.'
+          : `Build and tests passed. Open ${outDir} manually (${opened.reason}).`);
+      });
       return undefined;
     }
 

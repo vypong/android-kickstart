@@ -551,7 +551,7 @@
       <label class="check" for="autorun">
         <input type="checkbox" id="autorun" checked>
         <span>
-          Build it and open in Android Studio
+          Open in Android Studio when done
           <em id="autorunNote"></em>
         </span>
       </label>
@@ -732,8 +732,8 @@ async function init() {
   $('eolLink').href = INIT.apiLevelsLink;
 
   $('autorunNote').textContent = INIT.detected
-    ? 'Runs assembleDebug and the unit tests first, so you know it works before you open it.'
-    : 'No Android Studio found — it will still build, but cannot open the project for you.';
+    ? 'Studio runs its own Gradle sync on open, so nothing is built here.'
+    : 'No Android Studio was detected on this machine.';
 
   const env = [];
   if (INIT.detected) {
@@ -820,10 +820,12 @@ function create() {
   $('log').textContent = '';
   const autorun = $('autorun').checked;
   setBusy(true);
-  setStatus(autorun ? 'setting up, then building…' : 'setting up…');
+  setStatus('setting up…');
 
+  // No Gradle here on purpose: Android Studio syncs the project when it opens, so building
+  // in this console would just do the same work twice. Use the CLI's --build to verify.
   const params = new URLSearchParams(Object.assign({}, cfg, {
-    build: autorun ? '1' : '',
+    build: '',
     open: autorun ? '1' : '',
   }));
   const es = new EventSource('/api/create?' + params.toString());
