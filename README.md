@@ -102,7 +102,7 @@ test/     fakes + ViewModel tests (JUnit, coroutines-test, Turbine)
 ```
 
 A **Login screen** (validation, loading and error states) leads to a **Home screen**
-(greeting, item list, sign out). Auth goes through an `AuthRepository` interface with a
+(greeting, sign out, and — when you pick a database — a list to add to). Auth goes through an `AuthRepository` interface with a
 clearly-labelled stub implementation — swap the body of `signIn` for your backend and nothing
 above it changes. Choosing DataStore persists the session, so the app reopens straight to
 Home; choosing none keeps it in memory for the process lifetime.

@@ -1,14 +1,20 @@
 package {{PACKAGE}}.ui.home
 
 import androidx.compose.runtime.Immutable
+{{#if store}}
 import {{PACKAGE}}.domain.model.Item
+{{/if}}
 import {{PACKAGE}}.domain.model.User
 
 @Immutable
 data class HomeUiState(
     val user: User? = null,
+{{#if store}}
     val items: List<Item> = emptyList(),
+{{/if}}
     val isLoading: Boolean = true,
 ) {
+{{#if store}}
     val isEmpty: Boolean get() = !isLoading && items.isEmpty()
+{{/if}}
 }

@@ -1,9 +1,13 @@
 package {{PACKAGE}}.di
 
 import {{PACKAGE}}.data.repository.DefaultAuthRepository
+{{#if store}}
 import {{PACKAGE}}.data.repository.DefaultItemRepository
+{{/if}}
 import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if store}}
 import {{PACKAGE}}.domain.repository.ItemRepository
+{{/if}}
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,9 +22,11 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
 
+{{#if store}}
     @Binds
     @Singleton
     abstract fun bindItemRepository(impl: DefaultItemRepository): ItemRepository
+{{/if}}
 
     @Binds
     @Singleton

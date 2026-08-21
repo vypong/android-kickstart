@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "node --test test/resolver.test.mjs test/templates.test.mjs test/gui.test.mjs",
+    "test": "node --test test/resolver.test.mjs test/templates.test.mjs test/gui.test.mjs && node tools/audit_templates.mjs",
     "matrix": "node test/matrix.mjs",
     "matrix:quick": "node test/matrix.mjs --quick",
     "resolve": "node bin/resolve.mjs --print-toml",
@@ -22,7 +22,8 @@
     "gui": "node bin/gui.mjs",
     "logos": "node tools/fetch_logos.mjs",
     "fonts": "node tools/fetch_fonts.mjs",
-    "api-levels": "node tools/fetch_api_levels.mjs"
+    "api-levels": "node tools/fetch_api_levels.mjs",
+    "audit": "node tools/audit_templates.mjs"
   },
   "keywords": [
     "android",

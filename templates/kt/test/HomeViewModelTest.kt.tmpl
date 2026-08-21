@@ -3,7 +3,9 @@ package {{PACKAGE}}.ui.home
 import app.cash.turbine.test
 import {{PACKAGE}}.MainDispatcherRule
 import {{PACKAGE}}.data.repository.FakeAuthRepository
+{{#if store}}
 import {{PACKAGE}}.data.repository.FakeItemRepository
+{{/if}}
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -18,8 +20,12 @@ class HomeViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val authRepository = FakeAuthRepository()
+{{#if store}}
     private val itemRepository = FakeItemRepository()
     private val viewModel = HomeViewModel(authRepository, itemRepository)
+{{else}}
+    private val viewModel = HomeViewModel(authRepository)
+{{/if}}
 
     @Test
     fun `shows the signed-in user and an empty list`() = runTest {
@@ -30,10 +36,13 @@ class HomeViewModelTest {
             val state = awaitItem()
             assertFalse(state.isLoading)
             assertEquals("vee", state.user?.displayName)
+{{#if store}}
             assertTrue(state.isEmpty)
+{{/if}}
         }
     }
 
+{{#if store}}
     @Test
     fun `adding an item surfaces it in state`() = runTest {
         viewModel.uiState.test {
@@ -52,6 +61,7 @@ class HomeViewModelTest {
         }
     }
 
+{{/if}}
     @Test
     fun `signing out clears the user`() = runTest {
         authRepository.signIn("vee@example.com", "secret1")

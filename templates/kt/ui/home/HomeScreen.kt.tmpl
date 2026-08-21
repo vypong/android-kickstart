@@ -3,35 +3,59 @@ package {{PACKAGE}}.ui.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+{{#if store}}
 import androidx.compose.foundation.layout.Row
+{{/if}}
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+{{#if store}}
 import androidx.compose.foundation.lazy.LazyColumn
+{{/if}}
+{{#if store}}
 import androidx.compose.foundation.lazy.items
+{{/if}}
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+{{#if store}}
 import androidx.compose.material.icons.filled.Add
+{{/if}}
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+{{#if store}}
 import androidx.compose.material3.FilledIconButton
+{{/if}}
+{{#if store}}
 import androidx.compose.material3.HorizontalDivider
+{{/if}}
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+{{#if store}}
 import androidx.compose.material3.ListItem
+{{/if}}
 import androidx.compose.material3.MaterialTheme
+{{#if store}}
 import androidx.compose.material3.OutlinedTextField
+{{/if}}
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+{{#if store}}
 import androidx.compose.material3.TextButton
+{{/if}}
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+{{#if store}}
 import androidx.compose.runtime.mutableStateOf
+{{/if}}
+{{#if store}}
 import androidx.compose.runtime.saveable.rememberSaveable
+{{/if}}
+{{#if store}}
 import androidx.compose.runtime.setValue
+{{/if}}
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
@@ -40,7 +64,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+{{#if store}}
 import {{PACKAGE}}.domain.model.Item
+{{/if}}
 import {{PACKAGE}}.domain.model.User
 import {{PACKAGE}}.ui.theme.AppTheme
 {{#if coil}}
@@ -83,8 +109,10 @@ fun HomeScreen(
 
     HomeContent(
         uiState = uiState,
+{{#if store}}
         onAddItem = viewModel::addItem,
         onClearItems = viewModel::clearItems,
+{{/if}}
         onSignOut = viewModel::signOut,
         modifier = modifier,
     )
@@ -94,12 +122,16 @@ fun HomeScreen(
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
+{{#if store}}
     onAddItem: (String) -> Unit,
     onClearItems: () -> Unit,
+{{/if}}
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+{{#if store}}
     var draft by rememberSaveable { mutableStateOf("") }
+{{/if}}
 
     Scaffold(
         modifier = modifier,
@@ -138,6 +170,7 @@ fun HomeContent(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+{{#if store}}
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -187,6 +220,18 @@ fun HomeContent(
                     }
                 }
             }
+{{else}}
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                Text(
+                    text = "You are signed in. Build your first feature here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+{{/if}}
         }
     }
 }
@@ -219,8 +264,8 @@ private fun Avatar(email: String?, modifier: Modifier = Modifier) {
 
 private fun avatarUrlFor(email: String?): String =
     "https://api.dicebear.com/9.x/initials/png?seed=" + (email ?: "anon")
-{{/if}}
 
+{{/if}}
 @Preview(showBackground = true)
 @Composable
 private fun HomeContentPreview() {
@@ -228,11 +273,15 @@ private fun HomeContentPreview() {
         HomeContent(
             uiState = HomeUiState(
                 user = User(id = "1", email = "vee@example.com", displayName = "Vee"),
+{{#if store}}
                 items = listOf(Item(1, "Buy milk"), Item(2, "Ship the app")),
+{{/if}}
                 isLoading = false,
             ),
+{{#if store}}
             onAddItem = {},
             onClearItems = {},
+{{/if}}
             onSignOut = {},
         )
     }

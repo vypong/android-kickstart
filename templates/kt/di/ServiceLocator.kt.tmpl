@@ -13,9 +13,13 @@ import {{PACKAGE}}.data.local.AppDatabase
 import {{PACKAGE}}.data.preferences.SessionDataSource
 {{/if}}
 import {{PACKAGE}}.data.repository.DefaultAuthRepository
+{{#if store}}
 import {{PACKAGE}}.data.repository.DefaultItemRepository
+{{/if}}
 import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if store}}
 import {{PACKAGE}}.domain.repository.ItemRepository
+{{/if}}
 
 /**
  * Hand-rolled dependency graph - no DI framework was selected. Initialised once from
@@ -24,8 +28,10 @@ import {{PACKAGE}}.domain.repository.ItemRepository
  */
 object ServiceLocator {
 
+{{#if store}}
     lateinit var itemRepository: ItemRepository
         private set
+{{/if}}
 
     lateinit var authRepository: AuthRepository
         private set
@@ -44,9 +50,7 @@ object ServiceLocator {
         val database = AppDatabase(AndroidSqliteDriver(AppDatabase.Schema, appContext, "app.db"))
         itemRepository = DefaultItemRepository(database.itemQueries)
 {{/if}}
-{{#if noStore}}
-        itemRepository = DefaultItemRepository()
-{{/if}}
+
 {{#if prefs}}
         authRepository = DefaultAuthRepository(SessionDataSource(appContext))
 {{else}}

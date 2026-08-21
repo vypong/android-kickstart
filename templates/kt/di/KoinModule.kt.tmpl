@@ -17,9 +17,13 @@ import {{PACKAGE}}.data.preferences.SessionDataSource
 import {{PACKAGE}}.data.remote.ApiClient
 {{/if}}
 import {{PACKAGE}}.data.repository.DefaultAuthRepository
+{{#if store}}
 import {{PACKAGE}}.data.repository.DefaultItemRepository
+{{/if}}
 import {{PACKAGE}}.domain.repository.AuthRepository
+{{#if store}}
 import {{PACKAGE}}.domain.repository.ItemRepository
+{{/if}}
 {{#if sample}}
 import {{PACKAGE}}.ui.AppViewModel
 import {{PACKAGE}}.ui.home.HomeViewModel
@@ -27,7 +31,7 @@ import {{PACKAGE}}.ui.login.LoginViewModel
 {{/if}}
 import org.koin.android.ext.koin.androidContext
 {{#if sample}}
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 {{/if}}
 import org.koin.dsl.module
 
@@ -44,9 +48,7 @@ val appModule = module {
     single<ItemQueries> { get<AppDatabase>().itemQueries }
     single<ItemRepository> { DefaultItemRepository(get()) }
 {{/if}}
-{{#if noStore}}
-    single<ItemRepository> { DefaultItemRepository() }
-{{/if}}
+
 {{#if prefs}}
 
     single { SessionDataSource(androidContext()) }
@@ -67,6 +69,10 @@ val appModule = module {
 
     viewModel { AppViewModel(get()) }
     viewModel { LoginViewModel(get()) }
+{{#if store}}
     viewModel { HomeViewModel(get(), get()) }
+{{else}}
+    viewModel { HomeViewModel(get()) }
+{{/if}}
 {{/if}}
 }

@@ -22,12 +22,12 @@ const KT_FILES = [
   ['kt/App.kt.tmpl', 'App.kt', null, 'main'],
   ['kt/MainActivity.kt.tmpl', 'MainActivity.kt', null, 'main'],
 
-  ['kt/domain/model/Item.kt.tmpl', 'domain/model/Item.kt', null, 'main'],
+  ['kt/domain/model/Item.kt.tmpl', 'domain/model/Item.kt', 'store', 'main'],
   ['kt/domain/model/User.kt.tmpl', 'domain/model/User.kt', null, 'main'],
-  ['kt/domain/repository/ItemRepository.kt.tmpl', 'domain/repository/ItemRepository.kt', null, 'main'],
+  ['kt/domain/repository/ItemRepository.kt.tmpl', 'domain/repository/ItemRepository.kt', 'store', 'main'],
   ['kt/domain/repository/AuthRepository.kt.tmpl', 'domain/repository/AuthRepository.kt', null, 'main'],
 
-  ['kt/data/repository/DefaultItemRepository.kt.tmpl', 'data/repository/DefaultItemRepository.kt', 'notSqldelight', 'main'],
+  ['kt/data/repository/DefaultItemRepository.kt.tmpl', 'data/repository/DefaultItemRepository.kt', 'room', 'main'],
   ['kt/data/repository/SqlDelightItemRepository.kt.tmpl', 'data/repository/DefaultItemRepository.kt', 'sqldelight', 'main'],
   ['kt/data/repository/DefaultAuthRepository.kt.tmpl', 'data/repository/DefaultAuthRepository.kt', null, 'main'],
   ['kt/data/local/ItemEntity.kt.tmpl', 'data/local/ItemEntity.kt', 'room', 'main'],
@@ -58,7 +58,7 @@ const KT_FILES = [
   ['kt/di/ServiceLocator.kt.tmpl', 'di/ServiceLocator.kt', 'noDi', 'main'],
 
   ['kt/test/MainDispatcherRule.kt.tmpl', 'MainDispatcherRule.kt', 'sample', 'test'],
-  ['kt/test/FakeItemRepository.kt.tmpl', 'data/repository/FakeItemRepository.kt', 'sample', 'test'],
+  ['kt/test/FakeItemRepository.kt.tmpl', 'data/repository/FakeItemRepository.kt', 'sampleStore', 'test'],
   ['kt/test/FakeAuthRepository.kt.tmpl', 'data/repository/FakeAuthRepository.kt', 'sample', 'test'],
   ['kt/test/LoginViewModelTest.kt.tmpl', 'ui/login/LoginViewModelTest.kt', 'sample', 'test'],
   ['kt/test/HomeViewModelTest.kt.tmpl', 'ui/home/HomeViewModelTest.kt', 'sample', 'test'],
@@ -100,9 +100,13 @@ export function buildContext(config, resolved) {
     hilt, koin, noDi,
     room, prefs,
     sqldelight, notSqldelight: !sqldelight,
+    // The Item slice exists to demonstrate persistence. With no database selected it
+    // teaches nothing the Auth slice does not already show, so it is left out.
+    store: room || sqldelight,
     noStore: !room && !sqldelight,
     coil: image === 'coil', glide: image === 'glide', image: image !== 'none',
     sample, noSample: !sample,
+    sampleStore: sample && (room || sqldelight),
     retrofit: network === 'retrofit',
     ktor: network === 'ktor',
     network: network !== 'none',
