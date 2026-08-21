@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { resolveAll, checkConstraints, resolveAndroidPlatform, studioOptions, studioFromBuild } from '../src/resolver.mjs';
 import { renderVersionCatalog } from '../src/toml.mjs';
-import { scaffold, detectSdkDir, detectJdk, detectStudios } from '../src/scaffold.mjs';
+import { scaffold, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
 
 const toolRoot = pathResolve(dirname(fileURLToPath(import.meta.url)), '..');
 const catalog = JSON.parse(readFileSync(join(toolRoot, 'catalog.json'), 'utf8'));
@@ -235,7 +235,15 @@ const server = createServer(async (req, res) => {
       });
       stream.out(`\nwrote ${written.length} files to ${outDir}\n`);
 
-      if (!q.build) return stream.done(true, `Project ready. Open ${outDir} in Android Studio.`);
+      if (!q.build) {
+        if (q.open) {
+          const r = openInStudio(outDir, spawn);
+          return stream.done(true, r.opened
+            ? 'Project ready and opening in Android Studio.'
+            : `Project ready at ${outDir} (could not open the IDE: ${r.reason}).`);
+        }
+        return stream.done(true, `Project ready. Open ${outDir} in Android Studio.`);
+      }
 
       const jdk = detectJdk(Number(plan.config.javaVersion));
       stream.out(`\nbuilding with ${jdk ? jdk.home : 'default JAVA_HOME'}\n\n`);

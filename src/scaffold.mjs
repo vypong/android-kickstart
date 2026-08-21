@@ -255,3 +255,37 @@ export function detectSdkDir() {
   ].filter(Boolean).map((p) => p.split('\\:').join(':'));
   return candidates.find((p) => existsSync(join(p, 'platform-tools'))) ?? null;
 }
+
+/**
+ * Launches Android Studio on a generated project. Detached and unref'd so the tool can exit
+ * without taking the IDE with it. Returns what it did, so the caller can report honestly
+ * rather than claiming success when no IDE was found.
+ */
+export function openInStudio(projectDir, spawn) {
+  const studio = detectStudios()[0];
+  if (!studio) return { opened: false, reason: 'no Android Studio installation found' };
+
+  let cmd, args;
+  if (process.platform === 'win32') {
+    cmd = join(studio.home, 'bin', 'studio64.exe');
+    if (!existsSync(cmd)) cmd = join(studio.home, 'bin', 'studio.exe');
+    args = [projectDir];
+  } else if (process.platform === 'darwin') {
+    cmd = 'open';
+    args = ['-a', studio.home, projectDir];
+  } else {
+    cmd = join(studio.home, 'bin', 'studio.sh');
+    args = [projectDir];
+  }
+
+  if (process.platform !== 'darwin' && !existsSync(cmd)) {
+    return { opened: false, reason: `launcher not found at ${cmd}` };
+  }
+
+  try {
+    spawn(cmd, args, { detached: true, stdio: 'ignore' }).unref();
+    return { opened: true, via: cmd };
+  } catch (e) {
+    return { opened: false, reason: e.message };
+  }
+}

@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { resolveAll, checkConstraints, resolveAndroidPlatform, studioOptions, studioFromBuild, compareVersions } from '../src/resolver.mjs';
 import { renderVersionCatalog } from '../src/toml.mjs';
-import { scaffold, detectSdkDir, detectJdk, detectStudios } from '../src/scaffold.mjs';
+import { scaffold, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
 import { C } from '../src/color.mjs';
 import { printLibrary, printLibraries, printStudios, summaryLine } from '../src/info.mjs';
 
@@ -18,7 +18,7 @@ const libraries = JSON.parse(readFileSync(join(toolRoot, 'libraries.json'), 'utf
 
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const h = argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
-const has = (n) => argv.includes(`--${n}`);
+const has = (n) => argv.includes(`--${n}`) || argv.includes(n);
 
 const CHOICES = {
   di: ['hilt', 'koin', 'none'],
@@ -187,6 +187,7 @@ ${C.bold}choices${C.off}
 ${C.bold}behaviour${C.off}
   --yes                  skip prompts, use flags
   --build                run assembleDebug + unit tests to prove it all works
+  --open                 open the finished project in Android Studio
   --offline              resolve from pinned.json instead of the network
   --force                write into a non-empty directory
   --out=DIR              destination                          ${C.dim}(./<name>)${C.off}
@@ -200,7 +201,38 @@ ${C.bold}information${C.off} ${C.dim}(same data the GUI shows)${C.off}
 ${C.bold}overrides${C.off}
   --compile-sdk=N  --target-sdk=N  --java=17  --gradle=9.5.0  --sdk-dir=PATH
 
+${C.bold}recipes${C.off}
+  ${C.dim}# Just ask me questions - easiest if you are unsure${C.off}
+  android-kickstart
+
+  ${C.dim}# Default stack (Hilt + Retrofit + Room + DataStore + Coil), built and opened${C.off}
+  android-kickstart --yes --build --open --name=MyApp --out=~/StudioProjects/MyApp
+
+  ${C.dim}# Kotlin Multiplatform-friendly stack${C.off}
+  android-kickstart --yes --di=koin --network=ktor --db=sqldelight --name=KmpApp
+
+  ${C.dim}# Bare shell: all the wiring, none of the sample screens${C.off}
+  android-kickstart --yes --no-sample --name=Blank
+
+  ${C.dim}# See what versions you would get, without writing anything${C.off}
+  android-kickstart --dry-run --yes
+
+  ${C.dim}# Which Android Studio can open what${C.off}
+  android-kickstart --list-studios
+
+  ${C.dim}# What is Koin, and how does it differ from Hilt?${C.off}
+  android-kickstart --info=koin
+  android-kickstart --list-libs
+
+  ${C.dim}# Network is down, or you want yesterday's known-good versions${C.off}
+  android-kickstart --yes --offline --name=MyApp
+
+${C.bold}if something goes wrong${C.off}
+  ${C.dim}A build failure usually means one resolved version does not compose with another.${C.off}
+  ${C.dim}Re-run with --offline to fall back to the last known-good pinned set.${C.off}
+
 GUI with the same options: ${C.dim}android-kickstart-gui${C.off}
+Point-and-click if you prefer; it shows the resolved catalog live as you choose.
 `);
   process.exit(0);
 }

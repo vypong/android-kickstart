@@ -361,6 +361,23 @@
   .pane-foot { flex: none; border-top: 1px solid var(--md-outline-variant); padding: 18px 20px; }
   .actions { display: flex; gap: 12px; }
   .actions button { flex: 1; }
+  .check {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-top: 16px; padding: 8px 4px; min-height: 48px;
+    cursor: pointer; user-select: none;
+    font: 400 14px/20px var(--md-sans); letter-spacing: .25px;
+    color: var(--md-on-surface);
+  }
+  .check input {
+    appearance: auto; accent-color: var(--md-primary);
+    width: 20px; height: 20px; margin: 0; flex: none; cursor: pointer;
+  }
+  .check em {
+    display: block; font-style: normal; margin-top: 2px;
+    font-size: 13px; color: var(--md-on-surface-variant);
+  }
+  .check:hover { color: var(--md-primary); }
+
   .status {
     font: 400 14px/20px var(--md-sans); letter-spacing: .25px;
     color: var(--md-on-surface-variant); margin-top: 14px; min-height: 20px;
@@ -531,6 +548,13 @@
           Set up project
         </button>
       </div>
+      <label class="check" for="autorun">
+        <input type="checkbox" id="autorun" checked>
+        <span>
+          Build it and open in Android Studio
+          <em id="autorunNote"></em>
+        </span>
+      </label>
       <div class="status" id="status" role="status"></div>
       <pre class="log" id="log"></pre>
     </div>
@@ -639,7 +663,7 @@ function setStatus(text, cls) {
 }
 function setBusy(on) {
   busy = on;
-  for (const id of ['create','refresh','browse']) $(id).disabled = on;
+  for (const id of ['create','refresh','browse','autorun']) $(id).disabled = on;
 }
 function log(text, cls) {
   const el = $('log');
@@ -706,6 +730,10 @@ async function init() {
       + '  ·  ' + support + '</option>';
   }).join('');
   $('eolLink').href = INIT.apiLevelsLink;
+
+  $('autorunNote').textContent = INIT.detected
+    ? 'Runs assembleDebug and the unit tests first, so you know it works before you open it.'
+    : 'No Android Studio found — it will still build, but cannot open the project for you.';
 
   const env = [];
   if (INIT.detected) {
@@ -790,10 +818,14 @@ function create() {
   const cfg = choices();
   if (!cfg.out) { $('dest').focus(); setStatus('choose a destination folder first', 'err'); return; }
   $('log').textContent = '';
+  const autorun = $('autorun').checked;
   setBusy(true);
-  setStatus('setting up…');
+  setStatus(autorun ? 'setting up, then building…' : 'setting up…');
 
-  const params = new URLSearchParams(Object.assign({}, cfg, { build: '' }));
+  const params = new URLSearchParams(Object.assign({}, cfg, {
+    build: autorun ? '1' : '',
+    open: autorun ? '1' : '',
+  }));
   const es = new EventSource('/api/create?' + params.toString());
   es.addEventListener('out', (e) => log(JSON.parse(e.data)));
   es.addEventListener('done', (e) => {
