@@ -64,6 +64,15 @@ node bin/resolve.mjs --pin                  # snapshot the current set to pinned
 android-kickstart-gui        # opens a local page in your browser
 ```
 
+Running `android-kickstart-gui` starts a local server on 127.0.0.1 and opens your browser.
+It shuts itself down a few seconds after you close the tab, so nothing is left running
+(`--keep-alive` if you would rather it stay up).
+
+**Why a server at all?** The page is only the rendering layer. A browser cannot read your
+filesystem to find Android Studio, write 45 files to a folder you picked, run Gradle, or
+launch the IDE — and Maven Central and Google Maven send no CORS headers, so a `file://`
+page cannot even fetch the version data. Everything the tool actually does happens in Node.
+
 Built to **Material Design 3** — M3 colour roles, type scale, shape and elevation tokens,
 filter chips, outlined text fields and state layers, implemented in plain CSS rather than
 Material Web Components so the page stays one offline file. Roboto and Roboto Mono are

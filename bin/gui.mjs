@@ -22,6 +22,24 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const h = argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
 const PORT = Number(flag('port', '0'));
 const NO_OPEN = argv.includes('--no-open');
+const KEEP_ALIVE = argv.includes('--keep-alive');
+
+// The GUI is an app, not a daemon: the page heartbeats, and the server exits once nobody is
+// looking at it. Without this you are left with a stray node process after closing the tab.
+const IDLE_TIMEOUT_MS = 20_000;
+let lastSeen = Date.now();
+let activeJobs = 0;
+
+if (!KEEP_ALIVE) {
+  const timer = setInterval(() => {
+    if (activeJobs > 0) { lastSeen = Date.now(); return; }
+    if (Date.now() - lastSeen > IDLE_TIMEOUT_MS) {
+      console.log('browser closed - shutting down');
+      process.exit(0);
+    }
+  }, 5000);
+  timer.unref();
+}
 
 function detectedStudioRow() {
   for (const s of detectStudios()) {
@@ -184,6 +202,19 @@ const server = createServer(async (req, res) => {
       return res.end(readFileSync(file));
     }
 
+    if (url.pathname === '/api/ping') {
+      lastSeen = Date.now();
+      return json(200, { ok: true });
+    }
+
+    if (url.pathname === '/api/bye') {
+      // sendBeacon on tab close. Never quit out from under a running build.
+      lastSeen = 0;
+      res.writeHead(204); res.end();
+      if (!KEEP_ALIVE && activeJobs === 0) setTimeout(() => process.exit(0), 250);
+      return undefined;
+    }
+
     if (url.pathname === '/api/init') {
       return json(200, {
         studios: studioOptions(compat),
@@ -217,6 +248,8 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/create') {
       const q = Object.fromEntries(url.searchParams);
       const stream = sse(res);
+      activeJobs++;
+      res.on('close', () => { activeJobs = Math.max(0, activeJobs - 1); lastSeen = Date.now(); });
       const c = { ...q, minSdk: Number(q.minSdk) || 24 };
 
       stream.out(`resolving versions…\n`);
@@ -272,7 +305,9 @@ server.listen(PORT, '127.0.0.1', () => {
   const { port } = server.address();
   const url = `http://127.0.0.1:${port}`;
   console.log(`android-kickstart GUI  ${url}`);
-  console.log('press Ctrl+C to stop');
+  console.log(KEEP_ALIVE
+    ? 'press Ctrl+C to stop'
+    : 'closes automatically when you close the tab (--keep-alive to stay up)');
   if (NO_OPEN) return;
   const opener = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
     : process.platform === 'darwin' ? ['open', [url]]

@@ -838,6 +838,10 @@ function create() {
 }
 $('create').addEventListener('click', create);
 
+// Tell the server we are still here; it exits shortly after the tab goes away.
+setInterval(() => { fetch('/api/ping').catch(() => {}); }, 5000);
+window.addEventListener('pagehide', () => { navigator.sendBeacon('/api/bye'); });
+
 init();
 </script>
 </body>
