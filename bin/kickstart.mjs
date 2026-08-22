@@ -20,6 +20,20 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const h = argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
 const has = (n) => argv.includes(`--${n}`) || argv.includes(n);
 
+// Loaded from endoflife.date; see tools/fetch_api_levels.mjs
+const API_LEVELS = JSON.parse(readFileSync(join(toolRoot, 'android-api-levels.json'), 'utf8')).levels;
+
+// A package segment that is a Java keyword compiles to nothing sensible, and the error
+// Gradle produces for it is deeply unhelpful.
+const JAVA_KEYWORDS = new Set([
+  'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
+  'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final', 'finally', 'float',
+  'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int', 'interface', 'long', 'native',
+  'new', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp',
+  'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'try', 'void',
+  'volatile', 'while', 'true', 'false', 'null', 'in', 'is', 'object', 'val', 'var', 'fun',
+]);
+
 const CHOICES = {
   di: ['hilt', 'koin', 'none'],
   network: ['retrofit', 'ktor', 'none'],
@@ -70,7 +84,7 @@ function resolveStudioChoice(input) {
  * Resolves whatever the user typed - a list number, a name like "Narwhal", a version like
  * "2025.1.1", or a bare AGP version like "8.13" - into an AGP ceiling.
  */
-function matchStudio(input) {
+function matchStudio(input, opts = {}) {
   const options = studioOptions(compat);
   if (input == null || input === '' || /^latest$/i.test(input)) return null;
 
@@ -94,29 +108,125 @@ function matchStudio(input) {
   const byPrefix = options.find((o) => o.name.toLowerCase().startsWith(needle));
   if (byPrefix) return byPrefix;
 
+  // undefined = not understood. null already means "latest, no cap", so they cannot share
+  // a value: the interactive prompt needs to re-ask rather than silently uncap AGP.
+  if (opts.quiet) return undefined;
   console.log(`${C.yellow}! "${input}" did not match an Android Studio version - using the latest AGP${C.off}`);
   return null;
 }
 
 
 async function prompt() {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ask = async (q, def) => ((await rl.question(`${q} ${C.dim}(${def})${C.off} `)).trim() || def);
+  // Node's readline/promises only resolves the FIRST question when stdin is a pipe, so
+  // scripted answers are read up front and served from a queue instead. A real terminal
+  // takes the normal interactive path.
+  const piped = !process.stdin.isTTY;
+  let queue = [];
+  if (piped) {
+    const chunks = [];
+    for await (const chunk of process.stdin) chunks.push(chunk);
+    queue = Buffer.concat(chunks).toString('utf8').split(/\r?\n/);
+  }
+  const rl = piped ? null : createInterface({ input: process.stdin, output: process.stdout });
+
+  const ask = async (q, def) => {
+    const prompt = `${q} ${C.dim}(${def})${C.off} `;
+    if (piped) {
+      const line = queue.shift();
+      if (line === undefined) throw new Error('ran out of piped input while prompting');
+      process.stdout.write(prompt + line + '\n');
+      return line.trim() || def;
+    }
+    return (await rl.question(prompt)).trim() || def;
+  };
+  const reject = (msg) => console.log(`  ${C.yellow}${msg}${C.off}`);
+
+  /**
+   * Keeps asking until the answer is actually one of the options. Silently falling back to a
+   * default hides typos - you think you chose Koin, get Hilt, and only find out later.
+   */
   const pick = async (label, key) => {
     const opts = CHOICES[key];
+    const width = Math.max(...opts.map((o) => o.length)) + 2;
     console.log(`
 ${C.bold}${label}${C.off}`);
-    for (const o of opts) {
-      console.log(`  ${C.cyan}${o.padEnd(10)}${C.off}${C.dim}${summaryLine(o)}${C.off}`);
+    opts.forEach((o, i) => {
+      console.log(`  ${C.dim}${i + 1}.${C.off} ${C.cyan}${o.padEnd(width)}${C.off}${C.dim}${summaryLine(o)}${C.off}`);
+    });
+    for (;;) {
+      const raw = (await ask('  choose', opts[0])).toLowerCase();
+      if (opts.includes(raw)) return raw;
+      const n = Number(raw);
+      if (Number.isInteger(n) && n >= 1 && n <= opts.length) return opts[n - 1];
+      reject(`"${raw}" is not an option - type a name, or 1-${opts.length}`);
     }
-    const a = (await ask(`  choose`, opts[0])).toLowerCase();
-    return opts.includes(a) ? a : opts[0];
   };
-  const appName = await ask('App name', 'MyApp');
-  const packageName = await ask('Package', `com.example.${appName.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
+
+  const askAppName = async () => {
+    for (;;) {
+      const v = await ask('App name', 'MyApp');
+      if (/^[A-Za-z][A-Za-z0-9 _-]*$/.test(v)) return v.trim();
+      reject('Use letters, digits, spaces, - or _, starting with a letter.');
+    }
+  };
+
+  // A malformed applicationId does not fail until Gradle is well into the build.
+  const askPackage = async (def) => {
+    for (;;) {
+      const v = (await ask('Package', def)).toLowerCase();
+      if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(v)) {
+        reject('Needs at least two lowercase segments, e.g. com.example.myapp');
+        continue;
+      }
+      const reserved = v.split('.').find((seg) => JAVA_KEYWORDS.has(seg));
+      if (reserved) {
+        reject(`"${reserved}" is a Java keyword and cannot be a package segment.`);
+        continue;
+      }
+      return v;
+    }
+  };
+
+  const askMinSdk = async () => {
+    console.log(`
+${C.bold}minSdk${C.off} ${C.dim}- the oldest Android you support${C.off}`);
+    for (const l of API_LEVELS) {
+      const status = l.eol ? `${C.dim}security updates ended ${l.eol}${C.off}` : `${C.green}still supported${C.off}`;
+      console.log(`  ${C.cyan}${String(l.api).padEnd(4)}${C.off}${C.dim}Android ${String(l.version).padEnd(5)}${(l.codename ?? '').padEnd(18)}${C.off}${status}`);
+    }
+    for (;;) {
+      const raw = await ask('  API level', '24');
+      const n = Number(raw);
+      if (API_LEVELS.some((l) => l.api === n)) return n;
+      const lo = Math.min(...API_LEVELS.map((l) => l.api));
+      const hi = Math.max(...API_LEVELS.map((l) => l.api));
+      reject(`"${raw}" is not an API level in ${lo}-${hi}.`);
+    }
+  };
+
+  const askStudio = async () => {
+    const detected = detectedStudio();
+    const options = studioOptions(compat);
+    console.log(`
+${C.dim}Android Studio decides the highest AGP you can open.${C.off}`);
+    for (const [i, s] of options.entries()) {
+      const mark = detected && s.version === detected.version ? `${C.green}  <- detected${C.off}` : '';
+      console.log(`  ${String(i + 1).padStart(2)}. ${s.label.padEnd(34)} AGP <= ${String(s.agpMax).padEnd(5)} Gradle ${s.gradle}${mark}`);
+    }
+    const def = detected ? `${detected.name} | ${detected.version}` : 'latest';
+    for (;;) {
+      const raw = await ask('  Android Studio (number, name, or "latest")', def);
+      const match = matchStudio(raw, { quiet: true });
+      if (match !== undefined) return match;
+      reject(`"${raw}" did not match - type 1-${options.length}, a name like Narwhal, a version like 2025.1.1, or "latest".`);
+    }
+  };
+
+  const appName = await askAppName();
+  const packageName = await askPackage(`com.example.${appName.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
   const di = await pick('Dependency injection', 'di');
   const network = await pick('Networking', 'network');
-  const db = await pick('Database (Room)', 'db');
+  const db = await pick('Database', 'db');
   const prefs = await pick('Preferences', 'prefs');
   const image = await pick('Image loading', 'image');
 
@@ -125,22 +235,12 @@ ${C.bold}Sample code${C.off}`);
   for (const line of SAMPLE_CONTENTS) console.log(`  ${C.dim}${line}${C.off}`);
   console.log(`  ${C.dim}Choosing "no" keeps all the wiring but leaves the UI empty.${C.off}`);
   const sample = await pick('Include it?', 'sample');
-  const minSdk = await ask('minSdk', '24');
 
-  // Android Studio determines the AGP ceiling, so offer the detected install as the default.
-  const detected = detectedStudio();
-  const studioLabel = detected ? `${detected.name} | ${detected.version}` : '';
-  console.log(`
-${C.dim}Android Studio decides the highest AGP you can open.${C.off}`);
-  for (const [i, s] of studioOptions(compat).entries()) {
-    const mark = detected && s.version === detected.version ? `${C.green} <- detected${C.off}` : '';
-    console.log(`  ${String(i + 1).padStart(2)}. ${s.label.padEnd(34)} AGP <= ${String(s.agpMax).padEnd(5)} Gradle ${s.gradle}${mark}`);
-  }
-  const answer = await ask('Android Studio (number, name, or "latest")', studioLabel || 'latest');
-  const studio = matchStudio(answer);
+  const minSdk = await askMinSdk();
+  const studio = await askStudio();
 
-  rl.close();
-  return { appName, packageName, di, network, db, prefs, image, sample, minSdk: Number(minSdk), studio };
+  rl?.close();
+  return { appName, packageName, di, network, db, prefs, image, sample, minSdk, studio };
 }
 
 function run(cmd, args, cwd, env = {}) {
@@ -186,6 +286,7 @@ ${C.bold}choices${C.off}
 
 ${C.bold}behaviour${C.off}
   --yes                  skip prompts, use flags
+  --interactive          force the prompts even when stdin is piped
   --build                run assembleDebug + unit tests to prove it all works
   --open                 open the finished project in Android Studio
   --offline              resolve from pinned.json instead of the network
@@ -237,7 +338,9 @@ Point-and-click if you prefer; it shows the resolved catalog live as you choose.
   process.exit(0);
 }
 
-const interactive = !has('yes') && process.stdin.isTTY;
+// --interactive forces the prompts even when stdin is a pipe, which is how the answers
+// can be scripted or tested. Without it, a non-TTY means "use the flags".
+const interactive = !has('yes') && (has('interactive') || process.stdin.isTTY);
 const answers = interactive ? await prompt() : {
   appName: flag('name', 'MyApp'),
   packageName: flag('package', 'com.example.myapp'),

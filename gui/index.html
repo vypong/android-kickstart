@@ -590,7 +590,7 @@ const SAMPLE_TEXT = {
      + '(greeting, item list, sign out), an <b>AuthRepository</b> with a stub sign-in to replace with '
      + 'your backend, and <b>5 unit tests</b> using fakes. Everything builds and runs as generated.',
   no:  'Skips the screens and tests. You still get the <b>Application class</b>, theme, navigation host, '
-     + 'DI graph, repositories and database wiring — just an empty placeholder screen to replace.',
+     + 'DI graph, repositories and database wiring, just an empty placeholder screen to replace.',
 };
 
 function popover(key) {
@@ -700,12 +700,12 @@ function installGuide(missingSdk, missingJdk) {
   if (missingSdk) {
     steps.push('Install <b>Android Studio</b> from <code>developer.android.com/studio</code>. '
       + 'It bundles the SDK and a working JDK.');
-    steps.push('Open it once and finish the setup wizard — that is what actually downloads the SDK.');
+    steps.push('Open it once and finish the setup wizard, that is what actually downloads the SDK.');
     steps.push('The SDK lands in <code>%LOCALAPPDATA%\\Android\\Sdk</code> on Windows, '
       + '<code>~/Library/Android/sdk</code> on macOS, <code>~/Android/Sdk</code> on Linux.');
     steps.push('Reload this page. If it still is not found, set <code>ANDROID_HOME</code> to that path.');
   } else if (missingJdk) {
-    steps.push('Install <b>JDK 17 or newer</b> — Temurin from <code>adoptium.net</code> is the easy choice.');
+    steps.push('Install <b>JDK 17 or newer</b>, Temurin from <code>adoptium.net</code> is the easy choice.');
     steps.push('Set <code>JAVA_HOME</code> to the install directory, then reopen your terminal.');
     steps.push('Android Studio also ships one at <code>&lt;studio&gt;/jbr</code>, which this tool uses automatically when it is complete.');
   }
@@ -747,16 +747,16 @@ async function init() {
   $('env').innerHTML = env.join('');
   $('envGuide').innerHTML = installGuide(!INIT.sdkDir, !INIT.jdk);
 
-  $('studio').innerHTML = '<option value="">Latest available — no cap</option>'
+  $('studio').innerHTML = '<option value="">Latest available, no cap</option>'
     + INIT.studios.map((s) =>
         '<option value="' + s.version + '"'
         + (INIT.detected && s.version === INIT.detected.version ? ' selected' : '')
-        + '>' + s.label + ' — AGP ≤ ' + s.agpMax + '</option>').join('');
+        + '>' + s.label + ', AGP ≤ ' + s.agpMax + '</option>').join('');
 
   $('detectedNote').innerHTML = INIT.detected
     ? '<div class="notice info">' + IC.chk + '<span>Detected on this machine: <b>'
       + esc(INIT.detected.name) + ' | ' + esc(INIT.detected.version)
-      + '</b> — selected below. It opens AGP up to <b>' + esc(INIT.detected.agpMax) + '</b>.</span></div>'
+      + '</b>, selected below. It opens AGP up to <b>' + esc(INIT.detected.agpMax) + '</b>.</span></div>'
     : '<div class="notice">' + IC.warn + '<span>No Android Studio found, so nothing caps the AGP version. '
       + 'Pick your version below if you know it.</span></div>';
 

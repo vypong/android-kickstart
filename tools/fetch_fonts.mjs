@@ -67,4 +67,4 @@ for (const { file, family, weights } of byHash.values()) {
     + `font-display:swap;src:url('/fonts/${file}') format('woff2');}\n`;
 }
 writeFileSync(join(outDir, 'fonts.css'), out, 'utf8');
-console.log(`\nfonts.css written — ${downloaded} file(s), ${byHash.size} family(ies)`);
+console.log(`\nfonts.css written, ${downloaded} file(s), ${byHash.size} family(ies)`);

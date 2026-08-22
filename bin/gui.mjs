@@ -289,7 +289,7 @@ const server = createServer(async (req, res) => {
       child.stdout.on('data', (d) => stream.out(String(d)));
       child.stderr.on('data', (d) => stream.out(String(d)));
       child.on('close', (code) => {
-        if (code !== 0) return stream.done(false, `Gradle exited ${code} — see the log above.`);
+        if (code !== 0) return stream.done(false, `Gradle exited ${code}, see the log above.`);
         if (!q.open) return stream.done(true, 'Build and unit tests passed.');
 
         const opened = openInStudio(outDir, spawn);
