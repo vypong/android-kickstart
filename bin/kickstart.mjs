@@ -255,6 +255,18 @@ function run(cmd, args, cwd, env = {}) {
 
 // ---------------------------------------------------------------------------
 
+// Bare `android-kickstart` opens the GUI: it is the better way to make these choices, and
+// nobody should have to learn flags first. The CLI stays for scripts and CI, which is what
+// the build matrix drives, so it is not going anywhere.
+if ((argv.length === 0 && !has('interactive')) || has('gui')) {
+  const gui = pathResolve(dirname(fileURLToPath(import.meta.url)), 'gui.mjs');
+  const passthrough = argv.filter((a) => a !== '--gui' && a !== 'gui');
+  const code = await new Promise((done) => {
+    spawn(process.execPath, [gui, ...passthrough], { stdio: 'inherit' }).on('close', done);
+  });
+  process.exit(code ?? 0);
+}
+
 if (has('list-studios')) { printStudios(); process.exit(0); }
 
 if (has('list-libs')) { printLibraries(); process.exit(0); }
@@ -266,8 +278,9 @@ if (has('help') || has('h')) {
   console.log(`
 ${C.bold}android-kickstart${C.off} - scaffold an Android project on the latest stable libraries
 
-  ${C.dim}node bin/kickstart.mjs${C.off}                          interactive
-  ${C.dim}node bin/kickstart.mjs --yes --build --out=../MyApp${C.off}
+  ${C.dim}android-kickstart${C.off}                     opens the GUI (the usual way)
+  ${C.dim}android-kickstart --interactive${C.off}       ask me the questions in the terminal
+  ${C.dim}android-kickstart --yes --build ...${C.off}   scripted, no prompts
 
 ${C.bold}choices${C.off}
   --name=NAME            app + Gradle root project name      ${C.dim}(MyApp)${C.off}
@@ -286,7 +299,8 @@ ${C.bold}choices${C.off}
 
 ${C.bold}behaviour${C.off}
   --yes                  skip prompts, use flags
-  --interactive          force the prompts even when stdin is piped
+  --interactive          ask the questions in the terminal instead of opening the GUI
+  --gui                  open the GUI (also the default when given no arguments)
   --build                run assembleDebug + unit tests to prove it all works
   --open                 open the finished project in Android Studio
   --offline              resolve from pinned.json instead of the network

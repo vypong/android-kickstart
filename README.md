@@ -36,19 +36,19 @@ Works on macOS, Windows and Linux.
 **GUI**
 
 ```bash
-android-kickstart-gui
-```
-
-Opens in your browser. Choose your options, watch the version catalog update live, press
-**Set up project**. It writes the files and opens them in Android Studio.
-
-**CLI**
-
-```bash
 android-kickstart
 ```
 
-Asks you about each choice. Or say it all at once:
+That is it. Opens in your browser. Choose your options, watch the version catalog update live, press
+**Set up project**. It writes the files and opens them in Android Studio.
+
+**Terminal, if you prefer**
+
+```bash
+android-kickstart --interactive
+```
+
+Asks you the same questions. Or say it all at once, which is what CI does:
 
 ```bash
 android-kickstart --yes --build --open --name=MyApp --di=hilt --db=room

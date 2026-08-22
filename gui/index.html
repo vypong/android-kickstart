@@ -748,10 +748,13 @@ async function init() {
   $('envGuide').innerHTML = installGuide(!INIT.sdkDir, !INIT.jdk);
 
   $('studio').innerHTML = '<option value="">Latest available, no cap</option>'
-    + INIT.studios.map((s) =>
-        '<option value="' + s.version + '"'
-        + (INIT.detected && s.version === INIT.detected.version ? ' selected' : '')
-        + '>' + s.label + ', AGP ≤ ' + s.agpMax + '</option>').join('');
+    + INIT.studios.map((s) => {
+        const isDetected = INIT.detected && s.version === INIT.detected.version;
+        return '<option value="' + s.version + '"' + (isDetected ? ' selected' : '') + '>'
+          + s.label + '  ·  AGP ' + s.agpMax + ' max'
+          + (isDetected ? '  ·  detected on this machine' : '')
+          + '</option>';
+      }).join('');
 
   $('detectedNote').innerHTML = INIT.detected
     ? '<div class="notice info">' + IC.chk + '<span>Detected on this machine: <b>'
