@@ -251,11 +251,17 @@ export function detectJdk(minMajor = 17) {
 }
 
 export function detectSdkDir() {
+  const home = process.env.HOME ?? process.env.USERPROFILE;
   const candidates = [
     process.env.ANDROID_HOME,
     process.env.ANDROID_SDK_ROOT,
+    // Windows
     process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Android', 'Sdk') : null,
-    process.env.HOME ? join(process.env.HOME, 'Android', 'Sdk') : null,
+    // macOS - note the lowercase "sdk", and it is under Library, not the home root
+    home ? join(home, 'Library', 'Android', 'sdk') : null,
+    // Linux
+    home ? join(home, 'Android', 'Sdk') : null,
+    home ? join(home, 'Android', 'sdk') : null,
   ].filter(Boolean).map((p) => p.split('\\:').join(':'));
   return candidates.find((p) => existsSync(join(p, 'platform-tools'))) ?? null;
 }

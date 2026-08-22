@@ -1,195 +1,223 @@
+<div align="center">
+
+<img src="gui/logos/appmark.svg" width="72" height="72" alt="">
+
 # android-kickstart
 
-Scaffolds a runnable Android project wired to the **latest stable** versions of the stack,
-resolved live from Maven metadata and proven by a real Gradle build.
+**Start an Android project on today's libraries, not last year's.**
 
-Zero dependencies. No build step. No AI at runtime — it is HTTP requests, string templates,
-and `gradlew`.
+Resolves every version live from Maven, then proves the combination compiles
+by running a real Gradle build before it hands you the project.
+
+</div>
+
+---
+
+## Why this exists
+
+Starting an Android project means half an hour of the same chores. Open Android Studio, take
+whatever template it gives you, then go and look up the current version of Hilt. And Room.
+And Retrofit. Check whether this Compose BOM works with that Kotlin. Discover your Android
+Studio is one release behind and cannot open the AGP you just pinned. Delete a sample screen
+you never wanted.
+
+You can automate the lookups, but "latest" is a trap. `maven-metadata.xml` has a `<release>`
+field that lies — Kotlin's currently points at a release candidate. Google Maven serves a
+KSP plugin marker frozen in 2021. Compose BOM uses calendar versions, so sorting it as SemVer
+gives you nonsense. And even a perfect set of latest versions can simply fail to compile
+together.
+
+So this tool does the boring part properly: it reads the real metadata, applies the rules that
+make "latest stable" actually mean that, and then **builds the project to prove it**. If the
+combination does not compile, you find out in ninety seconds rather than after you have
+started writing features.
+
+## What you get
+
+A single-module app laid out the way Android's own guidance suggests:
 
 ```
-android-kickstart --yes --build --name=MyApp --di=hilt --db=room --image=coil
+domain/   models and repository interfaces      (no Android imports at all)
+data/     local · preferences · remote · repository implementations
+ui/       login/ · home/ · navigation/ · theme/   + AppRoot, AppViewModel
+di/       Hilt modules, a Koin module, or a hand-rolled ServiceLocator
+test/     fakes and ViewModel tests
 ```
+
+It runs the moment it is generated. A **Login screen** with validation, loading and error
+states leads to a **Home screen**. Authentication goes through an `AuthRepository` interface
+with a clearly-labelled stub — replace the body of `signIn` with your backend and nothing
+above it changes.
+
+Also in the box: an `Application` subclass wired into the manifest, type-safe `@Serializable`
+navigation routes, immutable `UiState` per screen, stateless composables with `@Preview`, a
+version catalog using BOMs and bundles, and unit tests that pass.
+
+Prefer an empty shell? Turn the sample off and keep every bit of the wiring.
 
 ## Install
 
+You need [Node 18+](https://nodejs.org). That is the only prerequisite for the tool itself —
+Android Studio and a JDK are needed to *build* what it generates, and it will tell you if
+either is missing.
+
 ```bash
-cd android-kickstart && npm link
+git clone https://github.com/vypong/android-kickstart.git
+cd android-kickstart
+npm link
 ```
 
-That puts `android-kickstart`, `android-kickstart-gui` and `android-versions` on your PATH, so they work from any
-directory in PowerShell, CMD, Git Bash, or Windows Terminal. Undo with `npm unlink -g android-kickstart`.
+`npm link` puts three commands on your PATH. Undo it any time with
+`npm unlink -g android-kickstart`.
 
-Without linking, just call it by path: `node path/to/bin/kickstart.mjs`.
+<details>
+<summary>Not keen on <code>npm link</code>?</summary>
+
+Skip it and call the scripts by path — there are no dependencies to install:
 
 ```bash
-android-kickstart                           # interactive prompts
-android-kickstart --yes --build \
+node /path/to/android-kickstart/bin/kickstart.mjs
+node /path/to/android-kickstart/bin/gui.mjs
+```
+</details>
+
+Works on macOS, Windows and Linux. It finds your Android Studio, SDK and JDK in the usual
+place for your platform, and says so plainly when it cannot.
+
+## Use it
+
+### The GUI
+
+```bash
+android-kickstart-gui
+```
+
+Opens a local page in your browser. Pick your options and watch the version catalog resolve
+live as you change them; hover any library for what it is and what it costs you. Press
+**Set up project** and it writes the files and opens them in Android Studio.
+
+It shuts itself down a few seconds after you close the tab, so nothing is left running.
+
+### The CLI
+
+```bash
+android-kickstart
+```
+
+With no arguments it asks you about each choice and explains the options as it goes. Or say
+exactly what you want:
+
+```bash
+android-kickstart --yes --build --open \
   --name=MyApp --package=com.example.myapp \
-  --di=hilt --network=retrofit --db=room \
-  --out=../MyApp
+  --di=hilt --network=retrofit --db=room --prefs=datastore --image=coil \
+  --out=~/StudioProjects/MyApp
 ```
 
-Colour is emitted only to a real terminal — piping to a file or a log gives plain text.
-`NO_COLOR=1` disables it, `FORCE_COLOR=1` forces it on.
-
-| Flag | Options | Default |
-|---|---|---|
-| `--name` | app + Gradle root project name | `MyApp` |
-| `--package` | applicationId and namespace | `com.example.myapp` |
-| `--di` | `hilt` · `koin` · `none` | `hilt` |
-| `--network` | `retrofit` · `ktor` · `none` | `retrofit` |
-| `--db` | `room` · `sqldelight` · `none` | `room` |
-| `--prefs` | `datastore` · `none` — key-value | `datastore` |
-| `--image` | `coil` · `glide` · `none` | `coil` |
-| `--sample` | `yes` · `no` — Login/Home screens + tests | `yes` |
-| `--studio` | name, version, AGP, or `latest` | detected IDE |
-| `--min-sdk` | integer | `24` |
-| `--build` | run `assembleDebug` + unit tests | off |
-| `--offline` | use `pinned.json`, no network | off |
-| `--force` | write into a non-empty directory | off |
-
-Overrides: `--compile-sdk` `--target-sdk` `--java` `--gradle` `--out` `--sdk-dir`.
-
-Version lookup on its own, no scaffolding:
+Useful things to know:
 
 ```bash
-node bin/resolve.mjs --print-toml           # resolved gradle/libs.versions.toml
-node bin/resolve.mjs --verify-plugins       # check every Gradle plugin marker resolves
-node bin/resolve.mjs --pin                  # snapshot the current set to pinned.json
+android-kickstart help              # everything, with worked examples
+android-kickstart --dry-run --yes   # show the versions you would get, write nothing
+android-kickstart --list-studios    # which Android Studio can open which AGP
+android-kickstart --info=koin       # what a library is, and what it trades away
+android-kickstart --yes --offline   # use the last known-good set, no network
 ```
 
-## GUI
+## The choices
 
-```bash
-android-kickstart-gui        # opens a local page in your browser
-```
-
-Running `android-kickstart-gui` starts a local server on 127.0.0.1 and opens your browser.
-It shuts itself down a few seconds after you close the tab, so nothing is left running
-(`--keep-alive` if you would rather it stay up).
-
-**Why a server at all?** The page is only the rendering layer. A browser cannot read your
-filesystem to find Android Studio, write 45 files to a folder you picked, run Gradle, or
-launch the IDE — and Maven Central and Google Maven send no CORS headers, so a `file://`
-page cannot even fetch the version data. Everything the tool actually does happens in Node.
-
-Built to **Material Design 3** — M3 colour roles, type scale, shape and elevation tokens,
-filter chips, outlined text fields and state layers, implemented in plain CSS rather than
-Material Web Components so the page stays one offline file. Roboto and Roboto Mono are
-vendored alongside the logos, so nothing is fetched at runtime.
-
-Same options as the CLI, plus a live `libs.versions.toml` preview that re-resolves as you
-change choices, a native folder picker, and detected SDK/JDK/Studio paths in the top bar with
-an install guide when something is missing.
-
-The GUI generates and opens the project in Android Studio — it does not run Gradle, because
-Studio syncs the project itself the moment it opens. Use the CLI's `--build` when you want
-the version set verified before you open anything.
-
-The CLI mirrors every GUI affordance: `--list-studios`, `--list-libs`, `--info=koin`,
-`--dry-run`. Both read the same `libraries.json` and `compat.json`, so they cannot drift.
-
-## What it generates
-
-Single-module app, ~45 files, laid out for modern Android:
-
-```
-domain/   model + repository interfaces      (no Android dependencies)
-data/     local (Room) · preferences (DataStore) · remote · repository impls
-ui/       login/ · home/ · navigation/ · theme/   + AppRoot, AppViewModel
-di/       Hilt modules, Koin module, or a hand-rolled ServiceLocator
-test/     fakes + ViewModel tests (JUnit, coroutines-test, Turbine)
-```
-
-A **Login screen** (validation, loading and error states) leads to a **Home screen**
-(greeting, sign out, and — when you pick a database — a list to add to). Auth goes through an `AuthRepository` interface with a
-clearly-labelled stub implementation — swap the body of `signIn` for your backend and nothing
-above it changes. Choosing DataStore persists the session, so the app reopens straight to
-Home; choosing none keeps it in memory for the process lifetime.
-
-Also generated: an `Application` subclass wired into the manifest (`@HiltAndroidApp`,
-`startKoin {}`, or `ServiceLocator.init`), type-safe `@Serializable` navigation routes,
-immutable `UiState` per screen, stateless composables with `@Preview`, and 8 unit tests
-that `--build` runs for you.
-
-With `--di=none` there is no framework: a hand-rolled `ServiceLocator` is generated instead.
-
-## The options
-
-| | Choices | Notes |
+| | Options | Notes |
 |---|---|---|
-| **DI** | Hilt · Koin · none | Koin uses its BOM; `none` generates a hand-rolled `ServiceLocator` |
+| **Dependency injection** | Hilt · Koin · none | `none` generates a hand-rolled `ServiceLocator` — the UI never notices |
 | **Networking** | Retrofit · Ktor · none | both wired to kotlinx.serialization |
-| **Database** | Room · SQLDelight · none | `none` gives an in-memory repository behind the same interface |
-| **Preferences** | DataStore · none | backs the session, so sign-in survives a restart |
-| **Image loading** | Coil · Glide · none | Coil is the Compose-native choice; Glide's Compose API is still beta |
-| **Sample code** | include · empty shell | Login + Home + 5 tests, or just the wiring |
+| **Database** | Room · SQLDelight · none | |
+| **Preferences** | DataStore · none | backs the session, so signing in survives a restart |
+| **Image loading** | Coil · Glide · none | Coil is the Compose-native one; Glide's Compose API is still beta |
+| **Sample code** | include · empty shell | Login + Home + tests, or just the wiring |
 
-Deliberately excluded: **Realm** — MongoDB ended mobile support on 30 September 2025.
+Every option depends on an interface, so swapping one later is a one-file change.
 
-## Bundles and BOMs
+Deliberately absent: **Realm**. MongoDB ended mobile support on 30 September 2025.
 
-The generated catalog uses both, so the build file stays short and families cannot drift:
+## Your Android Studio decides the ceiling
 
-- **BOMs** for Compose, Koin, Ktor and OkHttp — their member artifacts carry no version at
-  all. Hilt and Retrofit publish none, so those keep explicit version refs.
-- **`[bundles]`** grouping related aliases, so `build.gradle.kts` reads
-  `implementation(libs.bundles.compose)` rather than nine separate lines.
+An Android Studio release can only open Android Gradle Plugin versions up to a point. Pin AGP
+above that and the IDE refuses the project — which is a miserable way to start.
 
-Annotation processors stay out of the bundles — they need `ksp(...)`, not `implementation`.
+So the tool detects your installed Studio and caps AGP to match. Running Quail 2026.1.1? You
+get AGP 9.2 and Gradle 9.4.1, not the 9.3 that just shipped. Override with `--studio=latest`,
+or pick any release by name:
 
-## Why "take the newest version" is wrong
+```bash
+android-kickstart --list-studios
+android-kickstart --yes --studio=Narwhal      # or =2025.1.1, or =8.13
+```
+
+## Why "just take the newest" does not work
 
 Every row below is a live trap, each verified against the real repositories:
 
 | Trap | Reality |
 |---|---|
 | `<release>` in maven-metadata | Kotlin's points at `2.4.20-RC`. Never trusted. |
-| Last `<version>` entry | AGP's last four are alpha/rc. Naive `tail -1` gives `9.5.0-alpha02`. |
+| Last `<version>` entry | AGP's last four are alpha and rc. `tail -1` gives you `9.5.0-alpha02`. |
 | SemVer sorting | Compose BOM is CalVer (`2026.08.00`). Segment-wise numeric compare handles both. |
 | Lexicographic sorting | Ranks `2.8.4` above `2.8.10`. |
 | One repository | Hilt is Central-only; `dl.google.com` 404s for `com.google.dagger`. |
-| First repo that answers | **Google Maven mirrors a stale KSP plugin marker frozen at `1.5.30-1.0.0` (2021).** All repos are checked; stale mirrors are named in the output. |
+| First repo that answers | **Google Maven mirrors a stale KSP plugin marker frozen at `1.5.30-1.0.0` (2021).** Every repo is checked, and stale mirrors are named in the output. |
 | Plugin version == library version | The kotlinx-serialization *plugin* tracks the Kotlin compiler, not the library. |
 | Fetching everything | The Compose compiler plugin version *equals* the Kotlin version. Derived, never fetched. |
-| `compileSdk` from AGP | Wrong. 16 current libraries demand `compileSdk 37` while AGP 9.3 ships build-tools 36. Read from Google's SDK manifest instead. |
+| `compileSdk` from AGP | Wrong. Current AndroidX releases demand a platform newer than AGP's own build-tools. Read Google's SDK manifest instead. |
 
-## What HTTP cannot answer
+Two things have no machine-readable source at all, so the tool warns rather than guessing:
+the **AGP ↔ Gradle ↔ JDK floors** (a small hand-maintained table with a `_lastVerified` date)
+and **Kotlin ↔ KSP pairing** (KSP 2.x versions independently now). Only a real build settles
+either — which is exactly what `--build` is for, and why `pinned.json` exists as a fallback.
 
-Two things have no machine-readable source, so the tool warns instead of guessing:
+## Bundles and BOMs
 
-- **AGP ↔ Gradle ↔ JDK floors.** `compat.json` is a small hand-maintained table with a
-  `_lastVerified` date. An unrecognised AGP version produces a warning, not a guess.
-- **Kotlin ↔ KSP pairing.** KSP 2.x versions independently of Kotlin, so nothing in the
-  metadata proves a given pair works together.
+The generated catalog uses both, so the build file stays short and library families cannot
+drift apart:
 
-Only a real build settles either. That is what `--build` is for, and why `pinned.json`
-exists as the fallback when a fresh resolve produces a set that does not compose.
-
-## Tests
-
-```bash
-npm test              # unit tests + config audit, no network, instant
-npm run audit         # scaffold every risky config, check nothing leaked
-npm run matrix        # 13 pairwise combinations, real Gradle builds
-node test/matrix.mjs --full          # all 324 combinations
-node test/matrix.mjs --start=0 --limit=7   # slice it to fit a time window
+```kotlin
+implementation(platform(libs.androidx.compose.bom))
+implementation(libs.bundles.compose)
 ```
 
-The full product of `di x network x db x prefs x image x sample` is 324 builds, so the
-default is an **all-pairs** set: 13 projects in which every pair of option values appears
-together at least once. That is where interaction bugs live, at 4% of the cost.
+BOMs for Compose, Koin, Ktor, OkHttp and Coil — their member artifacts carry no version at
+all. Hilt and Retrofit publish none, so those keep explicit version refs. Annotation
+processors stay out of the bundles; they need `ksp(...)`, not `implementation`.
+
+## Contributing, or just poking at it
+
+```bash
+npm test        # unit tests + config audit, no network, instant
+npm run audit   # scaffold the risky configs, check nothing leaked
+npm run matrix  # 13 pairwise combinations, real Gradle builds
+```
+
+The full product of all six options is 324 builds, which nobody will ever run. `npm run
+matrix` uses **all-pairs coverage** instead: 13 projects in which every pair of option values
+appears together at least once. That is where interaction bugs live, at 4% of the cost.
+`node test/matrix.mjs --full` still does all 324 if you want it.
 
 The matrix **fails on Kotlin warnings as well as errors** — a deprecation warning today is a
-compile error two releases from now. It also retries a failed build once, because Gradle
-occasionally dies for reasons unrelated to the generated code (daemon eviction under memory
-pressure); a build that only passes on retry is reported as flaky rather than clean.
+compile error two releases from now. It retries a failed build once, so an environmental
+flake is labelled rather than mistaken for a real break.
 
-Last full pairwise run: **13/13 built with zero warnings** against AGP 9.3.1 / Kotlin 2.4.10 /
-compileSdk 37 (2026-08-22). Two needed a retry, both environmental.
+Last pairwise run: **13/13 built with zero warnings** against AGP 9.3.1 / Kotlin 2.4.10 /
+compileSdk 37 (22 August 2026).
 
-`test/matrix.mjs` is the real regression suite: it generates every
-`di × network × db × prefs` combination (36) and builds each one, running the generated
-unit tests too. Add `--stop-daemons` on a memory-constrained machine — each Gradle daemon
-holds ~2 GB and several can end up resident at once. Run it after upstream releases —
-it is what catches breaking changes like AGP 9.0 removing Kotlin Gradle Plugin support.
+Refreshing the vendored data:
+
+```bash
+npm run pin         # snapshot today's versions as the offline fallback
+npm run api-levels  # Android API levels from endoflife.date
+npm run logos       # library logos
+npm run fonts       # Roboto, for the GUI
+```
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Third-party marks and vendored data are credited in
+[NOTICE.md](NOTICE.md). Not affiliated with or endorsed by Google.
