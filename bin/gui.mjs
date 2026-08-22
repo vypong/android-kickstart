@@ -129,13 +129,23 @@ function pickFolder() {
     let cmd, args;
     if (process.platform === 'win32') {
       // -STA is required: FolderBrowserDialog is a single-threaded-apartment COM control.
+      // It is also shown with a TopMost owner form, otherwise the dialog opens BEHIND the
+      // browser window and looks like the button did nothing.
       cmd = 'powershell';
       args = ['-NoProfile', '-STA', '-Command',
         'Add-Type -AssemblyName System.Windows.Forms;' +
+        '$owner = New-Object System.Windows.Forms.Form;' +
+        '$owner.TopMost = $true;' +
+        '$owner.ShowInTaskbar = $false;' +
+        '$owner.Opacity = 0;' +
+        '$owner.Show();' +
+        '$owner.Activate();' +
         '$d = New-Object System.Windows.Forms.FolderBrowserDialog;' +
         '$d.Description = "Choose where to create the project";' +
         '$d.ShowNewFolderButton = $true;' +
-        'if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.SelectedPath }'];
+        '$result = $d.ShowDialog($owner);' +
+        '$owner.Close();' +
+        'if ($result -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.SelectedPath }'];
     } else if (process.platform === 'darwin') {
       cmd = 'osascript';
       args = ['-e', 'POSIX path of (choose folder with prompt "Choose where to create the project")'];
