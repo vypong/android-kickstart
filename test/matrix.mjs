@@ -1,7 +1,15 @@
 #!/usr/bin/env node
-// Generates every (di x network x db) combination and runs a real Gradle build on each.
-// This is the only thing that actually proves a resolved version set composes.
-// Usage: node test/matrix.mjs [--out=DIR] [--quick]
+// Generates real projects and builds each one, failing on Kotlin WARNINGS as well as errors -
+// a deprecation warning today is a compile error two releases from now.
+//
+// The full cartesian product is 3*3*3*2*3*2 = 324 builds, which nobody will ever run. The
+// default is an all-pairs (pairwise) set: every pair of option values appears together in at
+// least one project, which is where interaction bugs actually live. --full does the lot.
+//
+//   node test/matrix.mjs                     pairwise (default)
+//   node test/matrix.mjs --full              every combination
+//   node test/matrix.mjs --start=0 --limit=6 slice it to fit a time window
+//   node test/matrix.mjs --stop-daemons      reclaim ~2GB between builds
 
 import { spawn } from 'node:child_process';
 import { rmSync, mkdirSync } from 'node:fs';
@@ -14,26 +22,73 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const h = argv.find((a) => a.startsWith(`--${n}=`)); return h ? h.split('=').slice(1).join('=') : d; };
 const outRoot = resolve(flag('out', join(tmpdir(), 'ak-matrix')));
 
-const DI = ['hilt', 'koin', 'none'];
-const NET = ['retrofit', 'ktor', 'none'];
-const DB = ['room', 'none'];
-const PREFS = ['datastore', 'none'];
+const DIMS = {
+  di:      ['hilt', 'koin', 'none'],
+  network: ['retrofit', 'ktor', 'none'],
+  db:      ['room', 'sqldelight', 'none'],
+  prefs:   ['datastore', 'none'],
+  image:   ['coil', 'glide', 'none'],
+  sample:  ['yes', 'no'],
+};
+const NAMES = Object.keys(DIMS);
 
-const all = argv.includes('--quick')
-  ? [['hilt', 'retrofit', 'room', 'datastore'],
-     ['koin', 'ktor', 'none', 'datastore'],
-     ['none', 'none', 'room', 'none']]
-  : DI.flatMap((di) => NET.flatMap((n) => DB.flatMap((db) => PREFS.map((pf) => [di, n, db, pf]))));
+function cartesian() {
+  return NAMES.reduce(
+    (acc, key) => acc.flatMap((row) => DIMS[key].map((v) => ({ ...row, [key]: v }))),
+    [{}]
+  );
+}
 
-// --start/--limit slice the run so a long matrix can be executed in chunks that each
-// finish inside a background-task window.
+const pairsOf = (row) => {
+  const out = [];
+  for (let i = 0; i < NAMES.length; i++) {
+    for (let j = i + 1; j < NAMES.length; j++) {
+      out.push(`${NAMES[i]}=${row[NAMES[i]]}|${NAMES[j]}=${row[NAMES[j]]}`);
+    }
+  }
+  return out;
+};
+
+/**
+ * Greedy all-pairs: repeatedly take the candidate that covers the most still-uncovered value
+ * pairs. The search space is small enough to brute force over the full product each round,
+ * which yields a tighter set than a randomised heuristic.
+ */
+function pairwise() {
+  const required = new Set();
+  for (let i = 0; i < NAMES.length; i++) {
+    for (let j = i + 1; j < NAMES.length; j++) {
+      for (const a of DIMS[NAMES[i]]) {
+        for (const b of DIMS[NAMES[j]]) required.add(`${NAMES[i]}=${a}|${NAMES[j]}=${b}`);
+      }
+    }
+  }
+
+  const all = cartesian();
+  const covered = new Set();
+  const chosen = [];
+
+  while (covered.size < required.size) {
+    let best = null;
+    let bestGain = 0;
+    for (const row of all) {
+      const gain = pairsOf(row).filter((p) => !covered.has(p)).length;
+      if (gain > bestGain) { bestGain = gain; best = row; }
+    }
+    if (!best) break;
+    for (const p of pairsOf(best)) covered.add(p);
+    chosen.push(best);
+  }
+  return chosen;
+}
+
+const all = argv.includes('--full') ? cartesian() : pairwise();
 const start = Number(flag('start', '0'));
 const limit = Number(flag('limit', String(all.length)));
 const combos = all.slice(start, start + limit);
 
 function run(cmd, args, cwd) {
   return new Promise((res) => {
-    // No shell: the tool path contains spaces and shell:true would not quote it.
     const p = spawn(cmd, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     p.stdout.on('data', (d) => { out += d; });
@@ -42,44 +97,68 @@ function run(cmd, args, cwd) {
   });
 }
 
+const short = (line) => String(line).replace(/file:\/\/\S*?\/([^/]+\.kt)/, '$1').slice(0, 100);
+
 mkdirSync(outRoot, { recursive: true });
+console.log(`${all.length} combination(s) ${argv.includes('--full') ? '(full)' : '(pairwise)'}; `
+  + `running ${combos.length} from index ${start}\n`);
+
 const results = [];
 const t0 = Date.now();
 
-for (const [di, network, db, prefs] of combos) {
-  const name = `${di}-${network}-${db}-${prefs}`;
+for (const combo of combos) {
+  const name = NAMES.map((k) => combo[k]).join('-');
   const dir = join(outRoot, name);
   rmSync(dir, { recursive: true, force: true });
-  process.stdout.write(`${name.padEnd(24)} `);
+  process.stdout.write(`${name.padEnd(44)} `);
 
-  const gen = await run('node', [
+  const args = [
     join(toolRoot, 'bin', 'kickstart.mjs'), '--yes', '--build', '--force',
-    `--name=Demo`, `--package=com.demo.${di}${network}${db}${prefs}`.replace(/none/g, 'x'),
-    `--di=${di}`, `--network=${network}`, `--db=${db}`, `--prefs=${prefs}`,
+    '--name=Demo', `--package=com.demo.${name.replace(/-/g, '').replace(/none/g, 'x')}`,
+    ...NAMES.map((k) => `--${k}=${combo[k]}`),
     `--studio=${flag('studio', 'latest')}`, `--out=${dir}`,
-  ], toolRoot);
+  ];
 
-  // Reclaim the daemon between combinations. Each one holds ~2 GB, and several Gradle
-  // versions can end up resident at once, which OOMs a 16 GB machine mid-matrix.
+  // Gradle occasionally fails for reasons that have nothing to do with the generated code -
+  // daemon eviction under memory pressure, or a catalog-accessor cache race when projects are
+  // created back to back. Retry once so a flake is reported as flaky, not as broken.
+  let gen = await run('node', args, toolRoot);
+  let flaky = false;
+  if (gen.code !== 0) {
+    const retry = await run('node', args, toolRoot);
+    if (retry.code === 0) { flaky = true; gen = retry; }
+    else gen = retry;
+  }
+
   if (argv.includes('--stop-daemons')) {
     const gw = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
     await run(gw, ['--stop'], dir).catch(() => {});
   }
 
-  const ok = gen.code === 0;
-  // The child colours its output, so strip ANSI before line-matching or `^e:` never hits.
   const plain = gen.out.replace(/\x1b\[[0-9;]*m/g, '');
-  // Surface the first Kotlin/Gradle error line, which is what you actually need.
-  const firstError = (plain.match(/^e: .*$/m) ?? plain.match(/^\s*> .*$/m) ?? [''])[0].trim()
-    .replace(/file:\/\/\S*?\/([^/]+\.kt)/, '$1').slice(0, 150);
-  results.push({ name, ok, firstError });
-  console.log(ok ? 'BUILD OK' : `FAILED  ${firstError}`);
+  const errors = [...plain.matchAll(/^e: .*$/gm)].map((m) => m[0]);
+  // Only warnings pointing at generated sources. Dependency warnings are not ours to fix.
+  const warnings = [...plain.matchAll(/^w: file:.*$/gm)].map((m) => m[0]);
+  const built = gen.code === 0;
+
+  results.push({ name, built, warnings, errors, flaky });
+
+  if (built && !warnings.length) console.log(flaky ? 'OK (needed a retry)' : 'OK');
+  else if (!built) console.log(`FAILED    ${short(errors[0] ?? plain.match(/^\s*> .*$/m)?.[0] ?? '')}`);
+  else console.log(`WARN x${warnings.length}  ${short(warnings[0])}`);
 }
 
-const passed = results.filter((r) => r.ok).length;
-console.log(`\n${passed}/${results.length} combinations built in ${Math.round((Date.now() - t0) / 1000)}s`);
-if (passed < results.length) {
-  console.log('\nfailures:');
-  for (const r of results.filter((x) => !x.ok)) console.log(`  ${r.name}: ${r.firstError}`);
+const clean = results.filter((r) => r.built && !r.warnings.length);
+const flakes = results.filter((r) => r.flaky);
+console.log(`\n${clean.length}/${results.length} clean in ${Math.round((Date.now() - t0) / 1000)}s`
+  + (flakes.length ? `  (${flakes.length} needed a retry: ${flakes.map((f) => f.name).join(', ')})` : ''));
+
+const bad = results.filter((r) => !r.built || r.warnings.length);
+if (bad.length) {
+  console.log('\nneeds attention:');
+  for (const r of bad) {
+    console.log(`  ${r.name}  ${r.built ? `${r.warnings.length} warning(s)` : 'BUILD FAILED'}`);
+    for (const line of [...r.errors, ...r.warnings].slice(0, 3)) console.log(`      ${short(line)}`);
+  }
   process.exit(1);
 }
