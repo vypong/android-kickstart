@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { resolveAll, checkConstraints, resolveAndroidPlatform, studioOptions, studioFromBuild } from '../src/resolver.mjs';
 import { renderVersionCatalog } from '../src/toml.mjs';
-import { scaffold, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
+import { scaffold, planFiles, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
 
 const toolRoot = pathResolve(dirname(fileURLToPath(import.meta.url)), '..');
 const catalog = JSON.parse(readFileSync(join(toolRoot, 'catalog.json'), 'utf8'));
@@ -235,8 +235,12 @@ const server = createServer(async (req, res) => {
     if (url.pathname === '/api/preview' && req.method === 'POST') {
       const c = await readBody(req);
       const plan = await resolvePlan(c);
+      const toml = renderVersionCatalog(plan.results);
       return json(200, {
-        toml: renderVersionCatalog(plan.results),
+        toml,
+        agp: plan.results.agp?.version ?? null,
+        fileCount: planFiles(plan.config, plan.results).length,
+        versionCount: (toml.match(/^[A-Za-z][A-Za-z0-9_]*\s*=/gm) ?? []).length,
         versions: Object.fromEntries(Object.entries(plan.results).map(([k, v]) => [k, v.version])),
         compileSdk: plan.config.compileSdk,
         gradleVersion: plan.config.gradleVersion,

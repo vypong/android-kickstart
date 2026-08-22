@@ -73,3 +73,34 @@ test('libraries.json covers every selectable option', () => {
     assert.ok(libs[key].logo, `${key} has no logo`);
   }
 });
+
+// The presets hard-code choice values; if an option is ever renamed in GROUPS these would
+// silently configure nothing.
+// Index-based rather than a built RegExp: escaping \s through a JS string into new RegExp
+// silently degrades it to a literal 's'.
+function extractConst(name) {
+  const head = 'const ' + name + ' = {';
+  const from = script.indexOf(head);
+  assert.ok(from !== -1, name + ' not found in the page script');
+  const to = script.indexOf('\n};', from);
+  assert.ok(to !== -1, name + ' has no closing brace');
+  const src = script.slice(from, to + 3);
+  return new Function(src + '; return ' + name + ';')();
+}
+
+test('every preset selects real options', () => {
+  const groups = extractConst('GROUPS');
+  const presets = extractConst('PRESETS');
+
+  for (const [name, preset] of Object.entries(presets)) {
+    for (const [group, value] of Object.entries(preset.choices)) {
+      assert.ok(groups[group], `preset "${name}" sets unknown group "${group}"`);
+      const valid = groups[group].opts.map(([v]) => v);
+      assert.ok(valid.includes(value), `preset "${name}" sets ${group}=${value}, not one of ${valid.join('/')}`);
+    }
+    // Every group must be covered, or clicking a preset leaves a stale choice behind.
+    for (const group of Object.keys(groups)) {
+      assert.ok(group in preset.choices, `preset "${name}" does not set "${group}"`);
+    }
+  }
+});

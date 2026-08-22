@@ -123,6 +123,23 @@ export function buildContext(config, resolved) {
   };
 }
 
+/**
+ * The files scaffold() would write for this config, without writing them. The action bar in
+ * the GUI shows this count before you commit to generating anything.
+ */
+export function planFiles(config, resolved) {
+  const ctx = buildContext(config, resolved);
+  const files = STATIC_FILES.map(([, dest]) => dest);
+  for (const [, dest, cond, sourceSet] of KT_FILES) {
+    if (cond && !ctx[cond]) continue;
+    files.push(`app/src/${sourceSet}/java/.../${dest}`);
+  }
+  if (ctx.sqldelight) files.push('app/src/main/sqldelight/.../Item.sq');
+  files.push('gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.jar', 'gradlew', 'gradlew.bat');
+  if (config.sdkDir) files.push('local.properties');
+  return files;
+}
+
 function write(dest, content) {
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, content, 'utf8');

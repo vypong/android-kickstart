@@ -39,8 +39,9 @@ Works on macOS, Windows and Linux.
 android-kickstart
 ```
 
-That is it. Opens in your browser. Choose your options, watch the version catalog update live, press
-**Set up project**. It writes the files and opens them in Android Studio.
+That is it. That is it. Opens in your browser. Start from one of three known-good presets, change
+anything you like, press **Set up project**. It writes the files and opens them in Android
+Studio. Light and dark themes, and the whole form fits one screen.
 
 **Terminal, if you prefer**
 
