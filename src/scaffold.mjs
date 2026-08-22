@@ -184,12 +184,17 @@ export function scaffold({ root, toolRoot, config, resolved, versionCatalog }) {
  * install may be missing product-info.json entirely), so every candidate is reported.
  */
 export function detectStudios() {
+  const home = process.env.HOME ?? process.env.USERPROFILE;
   const roots = process.platform === 'win32'
     ? ['C:/Program Files/Android', 'C:/Program Files/JetBrains',
        process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Programs') : null]
     : process.platform === 'darwin'
-      ? ['/Applications']
-      : ['/opt', join(process.env.HOME ?? '', 'Applications')];
+      // Studio can be installed for all users or just this one; JetBrains Toolbox uses a
+      // third location entirely.
+      ? ['/Applications',
+         home ? join(home, 'Applications') : null,
+         home ? join(home, 'Library', 'Application Support', 'JetBrains', 'Toolbox', 'apps') : null]
+      : ['/opt', '/usr/local', home ? join(home, 'Applications') : null];
 
   const found = [];
   for (const root of roots.filter(Boolean)) {

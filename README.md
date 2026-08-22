@@ -81,8 +81,12 @@ node /path/to/android-kickstart/bin/gui.mjs
 ```
 </details>
 
-Works on macOS, Windows and Linux. It finds your Android Studio, SDK and JDK in the usual
-place for your platform, and says so plainly when it cannot.
+Works on macOS, Windows and Linux. It looks for Android Studio, the SDK and a JDK in the
+usual places for your platform — including `~/Library/Android/sdk` and JetBrains Toolbox
+installs on macOS — and says so plainly when it cannot find them.
+
+CI runs the test suite and generates every DI/database combination on **Ubuntu, macOS and
+Windows** on every push, and does one real Gradle build on Linux.
 
 ## Use it
 

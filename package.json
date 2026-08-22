@@ -17,7 +17,7 @@
     "matrix": "node test/matrix.mjs",
     "matrix:quick": "node test/matrix.mjs --quick",
     "resolve": "node bin/resolve.mjs --print-toml",
-    "pin": "node bin/resolve.mjs --pin",
+    "pin": "node tools/pin_versions.mjs",
     "new": "node bin/kickstart.mjs",
     "gui": "node bin/gui.mjs",
     "logos": "node tools/fetch_logos.mjs",
