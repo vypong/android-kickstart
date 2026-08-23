@@ -33,54 +33,66 @@ Works on macOS, Windows and Linux.
 
 ## Use it
 
-**In the terminal**
-
-```bash
-android-kickstart
-```
-
-Asks you about each choice and explains the options as it goes. The project lands in the
-current directory unless you pass `--out`.
-
-Or say it all at once, which is what CI does:
-
-```bash
-android-kickstart --yes --build --open --name=MyApp --di=hilt --db=room
-```
-
-**In your browser**
+### The easy way
 
 ```bash
 android-kickstart-gui
 ```
 
-Start from one of three known-good presets, change anything you like, press **Set up
-project**. It writes the files and opens them in Android Studio. The version catalog updates
-live as you choose, and there are light and dark themes.
+That is the whole thing. It opens in your browser, picks up your Android Studio, SDK and JDK,
+and starts on a preset that already builds. Press **Set up project** and it lands in Android
+Studio a second later.
 
-The server shuts itself down a few seconds after you close the tab.
+Three presets to start from, then change anything:
 
-Handy commands:
+| Preset | What you get |
+|---|---|
+| **Standard app** | Hilt, Retrofit, Room, DataStore, Coil. What most teams ship. |
+| **Multiplatform-ready** | Koin, Ktor, SQLDelight. Pure Kotlin, so the data layer can move to iOS. |
+| **Minimal shell** | Compose and a ServiceLocator. No libraries to argue about. |
+
+### Or stay in the terminal
 
 ```bash
-android-kickstart help              # all flags, with examples
-android-kickstart --dry-run --yes   # show the versions, write nothing
-android-kickstart --list-studios    # which Studio opens which AGP
-android-kickstart --info=koin       # what a library is, and its trade-offs
+android-kickstart
 ```
 
-## Options
+One question at a time, each option explained as it goes, project written to the current
+directory. Nothing to look up.
 
-| | Choices |
-|---|---|
-| Dependency injection | Hilt, Koin, none |
-| Networking | Retrofit, Ktor, none |
-| Database | Room, SQLDelight, none |
-| Preferences | DataStore, none |
-| Image loading | Coil, Glide, none |
-| Sample code | include, or an empty shell |
+Say it in one line instead, which is what CI does:
 
-Everything depends on an interface, so swapping one later is a small change.
+```bash
+android-kickstart --yes --build --open --name=MyApp --di=koin --db=sqldelight
+```
+
+| Flag | Choices | Default |
+|---|---|---|
+| `--name` | app and Gradle project name | `MyApp` |
+| `--package` | applicationId and namespace | `com.example.<name>` |
+| `--di` | `hilt` · `koin` · `none` | `hilt` |
+| `--network` | `retrofit` · `ktor` · `none` | `retrofit` |
+| `--db` | `room` · `sqldelight` · `none` | `room` |
+| `--prefs` | `datastore` · `none` | `datastore` |
+| `--image` | `coil` · `glide` · `none` | `coil` |
+| `--sample` | `yes` · `no` | `yes` |
+| `--min-sdk` | any API level | `24` |
+| `--studio` | name, version, AGP, or `latest` | your installed IDE |
+| `--out` | where to write it | `./<name>` |
+
+Add `--build` to compile it before you open it, `--open` to launch Android Studio, `--offline`
+to use the last known-good versions without touching the network.
+
+Every option sits behind an interface, so swapping one later is a small change.
+
+### Worth knowing
+
+```bash
+android-kickstart help              # everything, with worked examples
+android-kickstart --dry-run --yes   # show the versions you would get, write nothing
+android-kickstart --list-studios    # which Android Studio opens which AGP
+android-kickstart --info=koin       # what a library is, and what it costs you
+```
 
 ## What you get
 
