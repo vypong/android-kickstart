@@ -1,5 +1,5 @@
 {
-  "pinnedAt": "2026-08-22T11:36:09.886Z",
+  "pinnedAt": "2026-08-23T05:48:57.229Z",
   "compileSdk": 37,
   "buildTools": "37.0.0",
   "versions": {
@@ -35,7 +35,6 @@
     "okhttpBom": "5.5.0",
     "retrofit": "3.0.0",
     "room": "2.8.4",
-    "sqldelight": "2.3.2",
-    "turbine": "1.2.1"
+    "sqldelight": "2.3.2"
   }
 }

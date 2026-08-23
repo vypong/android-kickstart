@@ -1,19 +1,29 @@
 package {{PACKAGE}}.ui.home
 
-import app.cash.turbine.test
 import {{PACKAGE}}.MainDispatcherRule
 import {{PACKAGE}}.data.repository.FakeAuthRepository
 {{#if store}}
 import {{PACKAGE}}.data.repository.FakeItemRepository
 {{/if}}
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * These tests wait for the state they care about rather than counting emissions or advancing
+ * the scheduler by hand.
+ *
+ * uiState is a stateIn(WhileSubscribed) flow, so it stays at its initial value until someone
+ * collects it. `first { ... }` both starts that subscription and suspends until the condition
+ * holds, which makes the test independent of how many intermediate values combine() happens
+ * to produce. Counting them is what made an earlier version of this file pass locally and
+ * time out on CI.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
     @get:Rule
@@ -28,50 +38,63 @@ class HomeViewModelTest {
 {{/if}}
 
     @Test
-    fun `shows the signed-in user and an empty list`() = runTest {
+    fun `starts loaded with no signed-in user`() = runTest(mainDispatcherRule.testDispatcher) {
+        val state = viewModel.uiState.first { !it.isLoading }
+
+        assertNull(state.user)
+    }
+
+    @Test
+    fun `shows the signed-in user`() = runTest(mainDispatcherRule.testDispatcher) {
         authRepository.signIn("vee@example.com", "secret1")
 
-        viewModel.uiState.test {
-            skipItems(1) // initial placeholder
-            val state = awaitItem()
-            assertFalse(state.isLoading)
-            assertEquals("vee", state.user?.displayName)
-{{#if store}}
-            assertTrue(state.isEmpty)
-{{/if}}
-        }
-    }
+        val state = viewModel.uiState.first { it.user != null }
 
-{{#if store}}
-    @Test
-    fun `adding an item surfaces it in state`() = runTest {
-        viewModel.uiState.test {
-            skipItems(2)
-            viewModel.addItem("Ship it")
-            assertEquals("Ship it", awaitItem().items.first().label)
-        }
+        assertEquals("vee", state.user?.displayName)
+        assertEquals("vee@example.com", state.user?.email)
     }
 
     @Test
-    fun `blank labels are ignored`() = runTest {
+    fun `signing out clears the user`() = runTest(mainDispatcherRule.testDispatcher) {
+        authRepository.signIn("vee@example.com", "secret1")
+        viewModel.uiState.first { it.user != null }
+
+        viewModel.signOut()
+
+        assertNull(viewModel.uiState.first { !it.isLoading && it.user == null }.user)
+    }
+{{#if store}}
+
+    @Test
+    fun `adding an item surfaces it in state`() = runTest(mainDispatcherRule.testDispatcher) {
+        viewModel.addItem("Ship it")
+
+        val state = viewModel.uiState.first { it.items.isNotEmpty() }
+
+        assertEquals(listOf("Ship it"), state.items.map { it.label })
+    }
+
+    @Test
+    fun `blank labels are ignored`() = runTest(mainDispatcherRule.testDispatcher) {
+        // Adding a real item afterwards gives the test something to wait for. Waiting for
+        // the blank one to be rejected would mean waiting for a state that never arrives.
         viewModel.addItem("   ")
-        viewModel.uiState.test {
-            skipItems(1)
-            assertTrue(awaitItem().items.isEmpty())
-        }
+        viewModel.addItem("kept")
+
+        val state = viewModel.uiState.first { it.items.isNotEmpty() }
+
+        assertEquals(listOf("kept"), state.items.map { it.label })
     }
 
-{{/if}}
     @Test
-    fun `signing out clears the user`() = runTest {
-        authRepository.signIn("vee@example.com", "secret1")
+    fun `clearing removes every item`() = runTest(mainDispatcherRule.testDispatcher) {
+        viewModel.addItem("one")
+        viewModel.addItem("two")
+        viewModel.uiState.first { it.items.size == 2 }
 
-        viewModel.uiState.test {
-            skipItems(1)
-            assertEquals("vee", awaitItem().user?.displayName)
+        viewModel.clearItems()
 
-            viewModel.signOut()
-            assertNull(awaitItem().user)
-        }
+        assertEquals(emptyList<String>(), viewModel.uiState.first { it.items.isEmpty() }.items)
     }
+{{/if}}
 }

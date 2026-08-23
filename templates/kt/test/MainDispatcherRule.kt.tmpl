@@ -12,14 +12,18 @@ import org.junit.runner.Description
 /**
  * viewModelScope runs on Dispatchers.Main, which does not exist in a unit test. This rule
  * swaps it for a test dispatcher around each test.
+ *
+ * [testDispatcher] is exposed on purpose: pass it to runTest so the test body and the
+ * ViewModel share one scheduler. Without that they get two, and advanceUntilIdle() advances
+ * the wrong one, so nothing the ViewModel launched has actually run when you assert.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainDispatcherRule(
-    private val dispatcher: TestDispatcher = UnconfinedTestDispatcher(),
+    val testDispatcher: TestDispatcher = UnconfinedTestDispatcher(),
 ) : TestWatcher() {
 
     override fun starting(description: Description) {
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(testDispatcher)
     }
 
     override fun finished(description: Description) {

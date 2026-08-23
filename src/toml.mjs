@@ -68,7 +68,6 @@ const LIBRARIES = [
 
   { when: 'junit', alias: 'junit', module: 'junit:junit', ref: 'junit' },
   { when: 'coroutinesTest', alias: 'kotlinx-coroutines-test', module: 'org.jetbrains.kotlinx:kotlinx-coroutines-test', ref: 'coroutinesTest' },
-  { when: 'turbine', alias: 'turbine', module: 'app.cash.turbine:turbine', ref: 'turbine' },
   { when: 'androidxTestJunit', alias: 'androidx-junit', module: 'androidx.test.ext:junit', ref: 'androidxTestJunit' },
   { when: 'espresso', alias: 'androidx-espresso-core', module: 'androidx.test.espresso:espresso-core', ref: 'espresso' },
 ];
@@ -91,7 +90,7 @@ const BUNDLES = {
   sqldelight: ['sqldelight-android-driver', 'sqldelight-coroutines'],
   coil: ['coil-compose', 'coil-network-okhttp'],
   glide: ['glide', 'glide-compose'],
-  'unit-test': ['junit', 'kotlinx-coroutines-test', 'turbine'],
+  'unit-test': ['junit', 'kotlinx-coroutines-test'],
   'android-test': ['androidx-junit', 'androidx-espresso-core'],
 };
 

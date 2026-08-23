@@ -1,8 +1,9 @@
 package {{PACKAGE}}.ui.login
 
-import app.cash.turbine.test
 import {{PACKAGE}}.MainDispatcherRule
 import {{PACKAGE}}.data.repository.FakeAuthRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -11,6 +12,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * uiState here is a plain MutableStateFlow, so .value is always current and no collector is
+ * needed. advanceUntilIdle() lets the coroutine launched by signIn() finish first.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
 
     @get:Rule
@@ -31,43 +37,43 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `successful sign in flips isSignedIn`() = runTest {
+    fun `successful sign in flips isSignedIn`() = runTest(mainDispatcherRule.testDispatcher) {
         viewModel.updateEmail("vee@example.com")
         viewModel.updatePassword("secret1")
+        assertFalse(viewModel.uiState.value.isSignedIn)
 
-        viewModel.uiState.test {
-            assertFalse(awaitItem().isSignedIn)
-            viewModel.signIn()
-            skipItems(1) // isSubmitting = true
-            val done = awaitItem()
-            assertTrue(done.isSignedIn)
-            assertFalse(done.isSubmitting)
-        }
+        viewModel.signIn()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isSignedIn)
+        assertFalse(state.isSubmitting)
+        assertNull(state.errorMessage)
     }
 
     @Test
-    fun `failed sign in surfaces the message and stays signed out`() = runTest {
+    fun `failed sign in surfaces the message and stays signed out`() = runTest(mainDispatcherRule.testDispatcher) {
         authRepository.nextFailure = IllegalArgumentException("Enter a valid email address.")
         viewModel.updateEmail("nope")
         viewModel.updatePassword("secret1")
 
-        viewModel.uiState.test {
-            skipItems(1)
-            viewModel.signIn()
-            skipItems(1) // isSubmitting = true
-            val failed = awaitItem()
-            assertEquals("Enter a valid email address.", failed.errorMessage)
-            assertFalse(failed.isSignedIn)
-            assertFalse(failed.isSubmitting)
-        }
+        viewModel.signIn()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals("Enter a valid email address.", state.errorMessage)
+        assertFalse(state.isSignedIn)
+        assertFalse(state.isSubmitting)
     }
 
     @Test
-    fun `editing a field clears the previous error`() = runTest {
+    fun `editing a field clears the previous error`() = runTest(mainDispatcherRule.testDispatcher) {
         authRepository.nextFailure = IllegalArgumentException("boom")
         viewModel.updateEmail("nope")
         viewModel.updatePassword("secret1")
         viewModel.signIn()
+        advanceUntilIdle()
+        assertEquals("boom", viewModel.uiState.value.errorMessage)
 
         viewModel.updateEmail("vee@example.com")
         assertNull(viewModel.uiState.value.errorMessage)

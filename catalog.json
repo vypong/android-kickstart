@@ -170,13 +170,6 @@
       "tag": "test",
       "note": "runTest + UnconfinedTestDispatcher for ViewModel tests."
     },
-    "turbine": {
-      "repo": "central",
-      "group": "app.cash.turbine",
-      "artifact": "turbine",
-      "tag": "test",
-      "note": "Flow testing. Makes StateFlow assertions readable."
-    },
     "hiltLifecycleViewmodelCompose": {
       "repo": "google",
       "group": "androidx.hilt",
@@ -245,7 +238,6 @@
       "kotlinxSerialization",
       "junit",
       "coroutinesTest",
-      "turbine",
       "androidxTestJunit",
       "espresso"
     ],
