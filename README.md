@@ -33,27 +33,32 @@ Works on macOS, Windows and Linux.
 
 ## Use it
 
-**GUI**
+**In the terminal**
 
 ```bash
 android-kickstart
 ```
 
-That is it. That is it. Opens in your browser. Start from one of three known-good presets, change
-anything you like, press **Set up project**. It writes the files and opens them in Android
-Studio. Light and dark themes, and the whole form fits one screen.
+Asks you about each choice and explains the options as it goes. The project lands in the
+current directory unless you pass `--out`.
 
-**Terminal, if you prefer**
-
-```bash
-android-kickstart --interactive
-```
-
-Asks you the same questions. Or say it all at once, which is what CI does:
+Or say it all at once, which is what CI does:
 
 ```bash
 android-kickstart --yes --build --open --name=MyApp --di=hilt --db=room
 ```
+
+**In your browser**
+
+```bash
+android-kickstart-gui
+```
+
+Start from one of three known-good presets, change anything you like, press **Set up
+project**. It writes the files and opens them in Android Studio. The version catalog updates
+live as you choose, and there are light and dark themes.
+
+The server shuts itself down a few seconds after you close the tab.
 
 Handy commands:
 

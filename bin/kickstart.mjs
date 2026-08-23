@@ -255,18 +255,6 @@ function run(cmd, args, cwd, env = {}) {
 
 // ---------------------------------------------------------------------------
 
-// Bare `android-kickstart` opens the GUI: it is the better way to make these choices, and
-// nobody should have to learn flags first. The CLI stays for scripts and CI, which is what
-// the build matrix drives, so it is not going anywhere.
-if ((argv.length === 0 && !has('interactive')) || has('gui')) {
-  const gui = pathResolve(dirname(fileURLToPath(import.meta.url)), 'gui.mjs');
-  const passthrough = argv.filter((a) => a !== '--gui' && a !== 'gui');
-  const code = await new Promise((done) => {
-    spawn(process.execPath, [gui, ...passthrough], { stdio: 'inherit' }).on('close', done);
-  });
-  process.exit(code ?? 0);
-}
-
 if (has('list-studios')) { printStudios(); process.exit(0); }
 
 if (has('list-libs')) { printLibraries(); process.exit(0); }
@@ -278,9 +266,9 @@ if (has('help') || has('h')) {
   console.log(`
 ${C.bold}android-kickstart${C.off} - scaffold an Android project on the latest stable libraries
 
-  ${C.dim}android-kickstart${C.off}                     opens the GUI (the usual way)
-  ${C.dim}android-kickstart --interactive${C.off}       ask me the questions in the terminal
+  ${C.dim}android-kickstart${C.off}                     ask me the questions, build here
   ${C.dim}android-kickstart --yes --build ...${C.off}   scripted, no prompts
+  ${C.dim}android-kickstart-gui${C.off}                 the same thing in your browser
 
 ${C.bold}choices${C.off}
   --name=NAME            app + Gradle root project name      ${C.dim}(MyApp)${C.off}
@@ -299,8 +287,7 @@ ${C.bold}choices${C.off}
 
 ${C.bold}behaviour${C.off}
   --yes                  skip prompts, use flags
-  --interactive          ask the questions in the terminal instead of opening the GUI
-  --gui                  open the GUI (also the default when given no arguments)
+  --interactive          force the prompts even when stdin is piped
   --build                run assembleDebug + unit tests to prove it all works
   --open                 open the finished project in Android Studio
   --offline              resolve from pinned.json instead of the network
@@ -318,6 +305,7 @@ ${C.bold}overrides${C.off}
 
 ${C.bold}recipes${C.off}
   ${C.dim}# Just ask me questions - easiest if you are unsure${C.off}
+  ${C.dim}# Creates the project in the current directory unless you pass --out${C.off}
   android-kickstart
 
   ${C.dim}# Default stack (Hilt + Retrofit + Room + DataStore + Coil), built and opened${C.off}
@@ -346,8 +334,8 @@ ${C.bold}if something goes wrong${C.off}
   ${C.dim}A build failure usually means one resolved version does not compose with another.${C.off}
   ${C.dim}Re-run with --offline to fall back to the last known-good pinned set.${C.off}
 
-GUI with the same options: ${C.dim}android-kickstart-gui${C.off}
-Point-and-click if you prefer; it shows the resolved catalog live as you choose.
+Prefer to point and click? ${C.dim}android-kickstart-gui${C.off}
+Same options, with the resolved version catalog updating live as you choose.
 `);
   process.exit(0);
 }
