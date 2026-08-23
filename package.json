@@ -39,7 +39,7 @@
     "sqldelight",
     "cli"
   ],
-  "author": "Vee Yik Pong",
+  "author": "Pong",
   "repository": {
     "type": "git",
     "url": "https://github.com/vypong/android-kickstart.git"
