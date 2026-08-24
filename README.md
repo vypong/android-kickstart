@@ -131,6 +131,18 @@ Two things have no machine-readable source at all, so the tool warns instead of 
 AGP to Gradle to JDK floors, and Kotlin to KSP pairing. Only a real build settles those, which
 is what `--build` is for.
 
+## Use it from Claude Code
+
+The same tool, driven by Claude. It asks what you want, then runs the CLI — no hand-written
+`build.gradle.kts`, no invented version numbers.
+
+```
+/plugin marketplace add vypong/android-kickstart
+/plugin install android-kickstart
+```
+
+Then just say what you want: *"new Android app called Ledger, Koin and Ktor, build it"*.
+
 ## Tests
 
 ```bash

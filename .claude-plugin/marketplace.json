@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "android-kickstart",
+  "description": "Scaffold Android projects on the latest stable libraries, from inside Claude Code.",
+  "owner": {
+    "name": "Pong",
+    "url": "https://github.com/vypong"
+  },
+  "plugins": [
+    {
+      "name": "android-kickstart",
+      "description": "Scaffold an Android project on the latest stable libraries, resolved live from Maven and proven by a real Gradle build.",
+      "author": { "name": "Pong" },
+      "category": "development",
+      "source": "./",
+      "homepage": "https://github.com/vypong/android-kickstart#readme"
+    }
+  ]
+}
