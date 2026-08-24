@@ -68,6 +68,29 @@ test('every combination scaffolds with no unsubstituted placeholders', () => {
   }
 });
 
+test('INTERNET permission follows the network choice', () => {
+  for (const network of NET) {
+    const dir = mkdtempSync(join(tmpdir(), 'ak-m-'));
+    try {
+      scaffold({
+        root: dir, toolRoot, resolved,
+        config: {
+          appName: 'Demo', packageName: 'com.demo.app', di: 'none', network, db: 'none',
+          minSdk: 24, compileSdk: 37, targetSdk: 37, javaVersion: '17',
+          gradleVersion: '9.5.0', sdkDir: null,
+        },
+        versionCatalog: renderVersionCatalog(resolved),
+      });
+      const manifest = readFileSync(join(dir, 'app/src/main/AndroidManifest.xml'), 'utf8');
+      const declared = manifest.includes('android.permission.INTERNET');
+      // An app that cannot make requests must not ask for the permission.
+      assert.equal(declared, network !== 'none', `--network=${network} got INTERNET=${declared}`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
 test('DI choice controls exactly one wiring file', () => {
   for (const di of DI) {
     const ctx = buildContext({ appName: 'D', packageName: 'c.d', di, network: 'none', db: 'none' }, resolved);
