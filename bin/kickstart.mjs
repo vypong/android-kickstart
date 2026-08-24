@@ -4,9 +4,9 @@ import { dirname, join, resolve as pathResolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
-import { resolveAll, checkConstraints, resolveAndroidPlatform, studioOptions, studioFromBuild, compareVersions } from '../src/resolver.mjs';
+import { resolveAll, checkConstraints, resolveAndroidPlatform, resolveGradleChecksum, studioOptions, studioFromBuild, compareVersions } from '../src/resolver.mjs';
 import { renderVersionCatalog } from '../src/toml.mjs';
-import { scaffold, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
+import { scaffold, validateIdentifiers, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
 import { C } from '../src/color.mjs';
 import { printLibrary, printLibraries, printStudios, summaryLine } from '../src/info.mjs';
 
@@ -356,6 +356,14 @@ const answers = interactive ? await prompt() : {
   studio: resolveStudioChoice(flag('studio', flag('agp', undefined))),
 };
 
+// Fail before any network work, with a readable message rather than a stack trace.
+try {
+  validateIdentifiers(answers);
+} catch (e) {
+  console.error(`${C.red}${e.message}${C.off}`);
+  process.exit(1);
+}
+
 const outDir = pathResolve(flag('out', answers.appName));
 if (!has('dry-run') && existsSync(outDir) && readdirSync(outDir).length && !has('force')) {
   console.error(`${C.red}refusing to write into non-empty ${outDir}${C.off} ${C.dim}(pass --force to override)${C.off}`);
@@ -436,6 +444,12 @@ const config = {
   gradleVersion: flag('gradle', agpRow?.minGradle ?? '9.5.0'),
   sdkDir: flag('sdk-dir', detectSdkDir()),
 };
+
+// Pin the distribution the wrapper downloads. Offline runs skip it rather than guess.
+config.gradleSha256 = has('offline') ? null : await resolveGradleChecksum(config.gradleVersion);
+if (!has('offline') && !config.gradleSha256) {
+  console.log(`${C.dim}  could not fetch the Gradle ${config.gradleVersion} checksum - wrapper written without a pin${C.off}`);
+}
 
 const versionCatalog = renderVersionCatalog(results);
 

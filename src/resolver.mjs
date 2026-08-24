@@ -220,6 +220,22 @@ export async function resolveAndroidPlatform(opts = {}) {
 // --- Android Studio <-> AGP ---------------------------------------------------
 
 /** Rows the user can choose from, newest first, annotated with what each implies. */
+/**
+ * SHA-256 of the Gradle distribution the wrapper will download. Pinning it means a swapped
+ * distribution is rejected by the wrapper itself, rather than trusted on TLS alone - Gradle's
+ * own recommendation. Returns null if the checksum cannot be fetched, in which case the
+ * wrapper is written without the pin rather than with a wrong one.
+ */
+export async function resolveGradleChecksum(version, opts = {}) {
+  try {
+    const url = `https://services.gradle.org/distributions/gradle-${version}-bin.zip.sha256`;
+    const body = (await getText(url, opts.timeoutMs ?? 10000)).trim();
+    return /^[0-9a-f]{64}$/.test(body) ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 export function studioOptions(compat) {
   return compat.studio.map((s) => {
     const agp = compat.agp.find((a) => a.agpMajorMinor === s.agpMax);

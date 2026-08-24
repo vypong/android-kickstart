@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostIsLoopback, tokenMatches } from '../src/guard.mjs';
 
 const toolRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(join(toolRoot, 'gui', 'index.html'), 'utf8');
@@ -10,6 +11,32 @@ const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 test('GUI script parses', () => {
   assert.doesNotThrow(() => new Function(script));
+});
+
+test('Host must be a loopback literal, so DNS rebinding is refused', () => {
+  for (const ok of ['127.0.0.1', '127.0.0.1:5173', 'localhost', 'LocalHost:80', '[::1]:5173']) {
+    assert.equal(hostIsLoopback(ok), true, `${ok} should be accepted`);
+  }
+  // A rebound domain resolves to 127.0.0.1 but still sends its own name in Host.
+  for (const bad of ['evil.example', 'evil.example:5173', '127.0.0.1.evil.example', '', undefined]) {
+    assert.equal(hostIsLoopback(bad), false, `${JSON.stringify(bad)} should be refused`);
+  }
+});
+
+test('the API token is compared safely and rejects near misses', () => {
+  const token = 'a'.repeat(48);
+  assert.equal(tokenMatches(token, token), true);
+  for (const bad of ['', null, undefined, 'a'.repeat(47), 'a'.repeat(49), `b${'a'.repeat(47)}`]) {
+    assert.equal(tokenMatches(token, bad), false, `${JSON.stringify(bad)} should be refused`);
+  }
+  // An empty expectation must never be satisfiable.
+  assert.equal(tokenMatches('', ''), false);
+});
+
+test('every API call from the page carries the token', () => {
+  const calls = script.match(/(?:fetch|EventSource|sendBeacon)\(\s*'\/api\/[^']*'/g) ?? [];
+  assert.deepEqual(calls, [], `these bypass api() and would 403: ${calls.join(', ')}`);
+  assert.match(script, /const TOKEN = '__AK_TOKEN__'/, 'page must declare the token placeholder');
 });
 
 // Pull the two pure functions out of the page so their OUTPUT can be asserted, not just

@@ -1,6 +1,9 @@
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
 distributionUrl=https\://services.gradle.org/distributions/gradle-{{GRADLE_VERSION}}-bin.zip
+{{#if gradleSha256}}
+distributionSha256Sum={{GRADLE_SHA256}}
+{{/if}}
 networkTimeout=10000
 validateDistributionUrl=true
 zipStoreBase=GRADLE_USER_HOME

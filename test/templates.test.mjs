@@ -68,6 +68,37 @@ test('every combination scaffolds with no unsubstituted placeholders', () => {
   }
 });
 
+test('hostile app names and packages are refused, not substituted', () => {
+  const base = { appName: 'Demo', packageName: 'com.demo.app', di: 'none', network: 'none', db: 'none' };
+
+  // Each of these closes the string it lands in and appends Kotlin that Gradle would run.
+  const hostilePackages = [
+    'com.evil"\n        println("pwned")\n        val x = "',
+    'com.evil"; System.exit(1); //',
+    'com.evil`whoami`',
+    '../../../etc/passwd',
+    'com.evil\n',
+    '',
+  ];
+  for (const packageName of hostilePackages) {
+    assert.throws(() => buildContext({ ...base, packageName }, resolved), /invalid package/,
+      `accepted hostile package ${JSON.stringify(packageName)}`);
+  }
+
+  for (const appName of ['Demo"/><x', 'Demo\n', '../Demo', '', '9Lives']) {
+    assert.throws(() => buildContext({ ...base, appName }, resolved), /invalid app name/,
+      `accepted hostile app name ${JSON.stringify(appName)}`);
+  }
+
+  // Ordinary values still pass.
+  for (const appName of ['MyApp', 'My App', 'my-app_2']) {
+    assert.doesNotThrow(() => buildContext({ ...base, appName }, resolved));
+  }
+  for (const packageName of ['com.example.app', 'com.example.my_app2', 'a.b']) {
+    assert.doesNotThrow(() => buildContext({ ...base, packageName }, resolved));
+  }
+});
+
 test('INTERNET permission follows the network choice', () => {
   for (const network of NET) {
     const dir = mkdtempSync(join(tmpdir(), 'ak-m-'));

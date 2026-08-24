@@ -8,10 +8,12 @@ import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { homedir } from 'node:os';
-import { resolveAll, checkConstraints, resolveAndroidPlatform, studioOptions, studioFromBuild } from '../src/resolver.mjs';
+import { resolveAll, checkConstraints, resolveAndroidPlatform, resolveGradleChecksum, studioOptions, studioFromBuild } from '../src/resolver.mjs';
 import { renderVersionCatalog } from '../src/toml.mjs';
-import { scaffold, planFiles, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
+import { hostIsLoopback, tokenMatches } from '../src/guard.mjs';
+import { scaffold, planFiles, validateIdentifiers, detectSdkDir, detectJdk, detectStudios, openInStudio } from '../src/scaffold.mjs';
 
 const toolRoot = pathResolve(dirname(fileURLToPath(import.meta.url)), '..');
 const catalog = JSON.parse(readFileSync(join(toolRoot, 'catalog.json'), 'utf8'));
@@ -118,6 +120,7 @@ async function resolvePlan(c) {
       targetSdk: compileSdk,
       javaVersion: String(agpRow?.minJdk ?? 17),
       gradleVersion: agpRow?.minGradle ?? '9.5.0',
+      gradleSha256: await resolveGradleChecksum(agpRow?.minGradle ?? '9.5.0'),
       sdkDir: detectSdkDir(),
     },
   };
@@ -182,14 +185,37 @@ const readBody = (req) => new Promise((resolve) => {
   let b = ''; req.on('data', (d) => { b += d; }); req.on('end', () => resolve(b ? JSON.parse(b) : {}));
 });
 
+// A per-run token plus a Host check; see src/guard.mjs for why each is needed.
+const TOKEN = randomBytes(24).toString('hex');
+
+// EventSource cannot set headers, so /api/create has to carry the token in the query.
+const tokenIsValid = (url, headers) =>
+  tokenMatches(TOKEN, url.searchParams.get('t') ?? headers['x-ak-token']);
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
   const json = (code, body) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
 
   try {
+    if (!hostIsLoopback(req.headers.host)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      return res.end('android-kickstart only answers requests addressed to localhost.\n');
+    }
+
+    if (url.pathname.startsWith('/api/') && !tokenIsValid(url, req.headers)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      return res.end('missing or bad token - open the URL this tool printed.\n');
+    }
+
     if (url.pathname === '/') {
-      const html = readFileSync(join(toolRoot, 'gui', 'index.html'));
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      // The page reads its token from here. Another origin cannot: reading this response is
+      // blocked by the same-origin policy, and the Host check above stops DNS rebinding.
+      const html = readFileSync(join(toolRoot, 'gui', 'index.html'), 'utf8')
+        .replace('__AK_TOKEN__', TOKEN);
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
       return res.end(html);
     }
 
@@ -265,6 +291,12 @@ const server = createServer(async (req, res) => {
       activeJobs++;
       res.on('close', () => { activeJobs = Math.max(0, activeJobs - 1); lastSeen = Date.now(); });
       const c = { ...q, minSdk: Number(q.minSdk) || 24 };
+
+      try {
+        validateIdentifiers({ appName: c.name, packageName: c.packageName });
+      } catch (e) {
+        return stream.done(false, e.message);
+      }
 
       stream.out(`resolving versions…\n`);
       const plan = await resolvePlan(c);

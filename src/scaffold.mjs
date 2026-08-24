@@ -64,7 +64,27 @@ const KT_FILES = [
   ['kt/test/HomeViewModelTest.kt.tmpl', 'ui/home/HomeViewModelTest.kt', 'sample', 'test'],
 ];
 
+// The app name and package are substituted into build.gradle.kts, the manifest and Kotlin
+// sources. An unchecked value closes the string it lands in and appends whatever it likes -
+// and Gradle executes build.gradle.kts, so that is code execution, not just a broken project.
+// The prompts have always checked this; validating here covers the flag and GUI paths too.
+const APP_NAME_RE = /^[A-Za-z][A-Za-z0-9 _-]*$/;
+const PACKAGE_RE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
+
+export function validateIdentifiers(config) {
+  const name = config.appName ?? '';
+  const pkg = config.packageName ?? '';
+  if (!APP_NAME_RE.test(name)) {
+    throw new Error(`invalid app name ${JSON.stringify(name)}: start with a letter, then letters, digits, spaces, _ or -`);
+  }
+  if (!PACKAGE_RE.test(pkg)) {
+    throw new Error(`invalid package ${JSON.stringify(pkg)}: lowercase segments separated by dots, e.g. com.example.app`);
+  }
+  return config;
+}
+
 export function buildContext(config, resolved) {
+  validateIdentifiers(config);
   const di = config.di ?? 'hilt';
   const network = config.network ?? 'retrofit';
   const db = config.db ?? 'room';
@@ -94,6 +114,9 @@ export function buildContext(config, resolved) {
     TARGET_SDK: config.targetSdk,
     JAVA_VERSION: config.javaVersion,
     GRADLE_VERSION: config.gradleVersion,
+    GRADLE_SHA256: config.gradleSha256 ?? '',
+    // Absent when the checksum could not be fetched; better no pin than a wrong one.
+    gradleSha256: Boolean(config.gradleSha256),
 
     agpBuiltInKotlin: agpMajor >= 9,
 

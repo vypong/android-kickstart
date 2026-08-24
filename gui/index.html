@@ -537,6 +537,16 @@
 </dialog>
 
 <script>
+// Substituted by the server when it serves this page. Every /api/ call must carry it, so a
+// page on another origin cannot drive the tool - it never gets to read this value.
+const TOKEN = '__AK_TOKEN__';
+const api = (path, params) => {
+  const u = new URL(path, location.origin);
+  for (const [k, v] of Object.entries(params ?? {})) u.searchParams.set(k, v);
+  u.searchParams.set('t', TOKEN);
+  return u.pathname + u.search;
+};
+
 const GROUPS = {
   di:      { label: 'Injection',   opts: [['hilt','Hilt'],['koin','Koin'],['none','None']] },
   network: { label: 'Networking',  opts: [['retrofit','Retrofit'],['ktor','Ktor'],['none','None']] },
@@ -741,7 +751,7 @@ async function refresh() {
   const mine = ++seq;
   if (drawer === 'toml') $('toml').textContent = 'resolving…';
   try {
-    const res = await fetch('/api/preview', {
+    const res = await fetch(api('/api/preview'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config()),
     });
@@ -849,7 +859,7 @@ $('browse').addEventListener('click', async () => {
   $('sumLine2').className = 'line2';
   $('sumLine2').textContent = 'waiting for the folder dialog…';
   try {
-    const data = await (await fetch('/api/pick-folder', { method: 'POST' })).json();
+    const data = await (await fetch(api('/api/pick-folder'), { method: 'POST' })).json();
     if (data.path) {
       $('destPath').dataset.root = data.path;
       updateDestDisplay();
@@ -882,7 +892,7 @@ $('create').addEventListener('click', () => {
   const params = new URLSearchParams(Object.assign({}, cfg, {
     build: '', open: $('autorun').checked ? '1' : '',
   }));
-  const es = new EventSource('/api/create?' + params.toString());
+  const es = new EventSource(api('/api/create') + '&' + params.toString());
   es.addEventListener('out', (e) => log(JSON.parse(e.data)));
   es.addEventListener('done', (e) => {
     const d = JSON.parse(e.data);
@@ -946,7 +956,7 @@ function installGuide() {
 
 async function init() {
   LIBS = await (await fetch('/libraries.json')).json();
-  INIT = await (await fetch('/api/init')).json();
+  INIT = await (await fetch(api('/api/init'))).json();
 
   $('destPath').dataset.root = INIT.defaultOut || '';
   updateDestDisplay();
@@ -978,8 +988,8 @@ async function init() {
 }
 
 // Tell the server we are still here; it exits shortly after the tab goes away.
-setInterval(() => { fetch('/api/ping').catch(() => {}); }, 5000);
-window.addEventListener('pagehide', () => { navigator.sendBeacon('/api/bye'); });
+setInterval(() => { fetch(api('/api/ping')).catch(() => {}); }, 5000);
+window.addEventListener('pagehide', () => { navigator.sendBeacon(api('/api/bye')); });
 
 init();
 </script>
